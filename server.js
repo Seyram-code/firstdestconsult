@@ -88,16 +88,22 @@ app.get('/api/health', async (req, res) => {
 
 app.post('/api/application', async (req, res) => {
   try {
-    const payload = req.body;
+    const payload = req.body || {};
+    const name = payload.name || [payload.firstName, payload.lastName].filter(Boolean).join(' ');
+    const record = {
+      ...payload,
+      name,
+      phone: payload.phone || payload.telephone || '',
+    };
     await insertRecord('applications', {
       id: Date.now(),
       createdAt: new Date().toISOString(),
-      ...payload,
+      ...record,
     });
 
     const notifications = await notifyAdmin(
-      payload.type ? `New ${payload.type}` : 'New Travel Application',
-      payload,
+      record.type ? `New ${record.type}` : 'New Travel Application',
+      record,
     );
 
     res.status(200).json({ success: true, message: 'Application received', notifications });
@@ -195,6 +201,8 @@ app.post('/api/flight-booking', async (req, res) => {
     const record = {
       id: Date.now(),
       createdAt: new Date().toISOString(),
+      name: payload.name || '',
+      phone: payload.phone || '',
       currentCountry: payload.currentCountry || '',
       currentAirport: payload.currentAirport || '',
       destinationCountry: payload.destinationCountry || '',
@@ -222,6 +230,8 @@ app.post('/api/hotel-booking', async (req, res) => {
     const record = {
       id: Date.now(),
       createdAt: new Date().toISOString(),
+      name: payload.name || '',
+      phone: payload.phone || '',
       destinationCountry: payload.destinationCountry || '',
       destinationCity: payload.destinationCity || '',
       checkInDate: payload.checkInDate || '',

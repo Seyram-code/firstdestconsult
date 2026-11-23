@@ -69,6 +69,16 @@
             <form id="flight-booking-form" class="document-help-form" novalidate>
               <div class="form-grid two-col">
                 <div class="form-field">
+                  <label for="flightContactName">Name</label>
+                  <input id="flightContactName" name="name" type="text" placeholder="Enter your full name" required />
+                </div>
+
+                <div class="form-field">
+                  <label for="flightContactPhone">Phone Number</label>
+                  <input id="flightContactPhone" name="phone" type="tel" placeholder="Enter your phone number" required />
+                </div>
+
+                <div class="form-field">
                   <label for="flightCurrentCountry">Current country</label>
                   <input id="flightCurrentCountry" name="currentCountry" list="country-list" placeholder="Enter your current country" required />
                 </div>

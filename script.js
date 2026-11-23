@@ -1098,6 +1098,8 @@ if (flightBookingForm) {
     event.preventDefault();
 
     const currentCountry = document.getElementById('flightCurrentCountry').value.trim();
+    const name = document.getElementById('flightContactName').value.trim();
+    const phone = document.getElementById('flightContactPhone').value.trim();
     const currentAirport = document.getElementById('flightCurrentAirport').value.trim();
     const destinationCountry = document.getElementById('flightDestinationCountry').value.trim();
     const destinationAirport = document.getElementById('flightDestinationAirport').value.trim();
@@ -1106,7 +1108,7 @@ if (flightBookingForm) {
     const returnDate = document.getElementById('flightReturnDate').value;
     const airline = document.getElementById('flightAirline').value.trim();
 
-    if (!currentCountry || !currentAirport || !destinationCountry || !destinationAirport || !destinationCity || !departureDate || !returnDate) {
+    if (!name || !phone || !currentCountry || !currentAirport || !destinationCountry || !destinationAirport || !destinationCity || !departureDate || !returnDate) {
       if (flightBookingStatus) {
         flightBookingStatus.textContent = 'Please complete all required fields and choose the suggested airports before submitting.';
         flightBookingStatus.style.color = '#c03333';
@@ -1127,6 +1129,8 @@ if (flightBookingForm) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          name,
+          phone,
           currentCountry,
           currentAirport,
           destinationCountry,
@@ -1166,6 +1170,8 @@ if (hotelBookingForm) {
   hotelBookingForm.addEventListener('submit', async function (event) {
     event.preventDefault();
 
+    const name = document.getElementById('hotelContactName').value.trim();
+    const phone = document.getElementById('hotelContactPhone').value.trim();
     const destinationCountry = document.getElementById('hotelDestinationCountry').value.trim();
     const destinationCity = document.getElementById('hotelDestinationCity').value.trim();
     const checkInDate = document.getElementById('hotelCheckInDate').value;
@@ -1173,7 +1179,7 @@ if (hotelBookingForm) {
     const adults = document.getElementById('hotelAdults').value.trim();
     const kids = document.getElementById('hotelKids').value.trim();
 
-    if (!destinationCountry || !destinationCity || !checkInDate || !checkOutDate) {
+    if (!name || !phone || !destinationCountry || !destinationCity || !checkInDate || !checkOutDate) {
       if (hotelBookingStatus) {
         hotelBookingStatus.textContent = 'Please complete the required destination and date fields.';
         hotelBookingStatus.style.color = '#c03333';
@@ -1194,6 +1200,8 @@ if (hotelBookingForm) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          name,
+          phone,
           destinationCountry,
           destinationCity,
           checkInDate,
