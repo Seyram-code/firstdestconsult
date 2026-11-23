@@ -15,25 +15,34 @@ let pool;
 
 function getPool() {
   if (!pool) {
-    const required = ['DB_HOST', 'DB_NAME', 'DB_USER'];
-    const missing = required.filter((name) => !process.env[name]);
-    if (missing.length) {
-      throw new Error(`Missing MySQL configuration: ${missing.join(', ')}.`);
-    }
-
-    pool = mysql.createPool({
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT || 3306),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD || '',
+    const databaseUrl = process.env.DB_URL || process.env.DATABASE_URL;
+    const poolOptions = {
       waitForConnections: true,
       connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
       queueLimit: 0,
       timezone: 'Z',
       supportBigNumbers: true,
       bigNumberStrings: false,
-    });
+    };
+
+    if (databaseUrl) {
+      pool = mysql.createPool({ uri: databaseUrl, ...poolOptions });
+    } else {
+      const required = ['DB_HOST', 'DB_NAME', 'DB_USER'];
+      const missing = required.filter((name) => !process.env[name]);
+      if (missing.length) {
+        throw new Error(`Missing MySQL configuration: ${missing.join(', ')} or DB_URL.`);
+      }
+
+      pool = mysql.createPool({
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_PORT || 3306),
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD || '',
+        ...poolOptions,
+      });
+    }
   }
   return pool;
 }

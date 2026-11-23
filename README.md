@@ -28,9 +28,10 @@ has its own database and credentials:
 
 1. In Hostinger hPanel, create a MySQL database and user, and grant the user
    access to that database.
-2. Set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, and
-   `ADMIN_ACCESS_CODE` in the Node.js app's Hostinger environment settings. Use
-   the hostname, database name, and username exactly as shown in hPanel.
+2. Set either `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`, or
+   a MySQL connection URI in `DB_URL` (or `DATABASE_URL`) in the Node.js app's
+   Hostinger environment settings. Set `ADMIN_ACCESS_CODE` there as well. Use
+   the connection details exactly as shown in hPanel.
 3. Deploy/restart the app. It creates `app_records` automatically using the
    configured database user.
 
