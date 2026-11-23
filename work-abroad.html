@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Work Abroad | First Dest Consult</title>
+    <meta
+      name="description"
+      content="Apply for work abroad opportunities with First Dest Consult."
+    />
+    <link rel="icon" type="image/png" href="images/b86a60e8-1b83-4315-a8e8-46578ff7e3ae.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="navbar container" aria-label="Main navigation">
+        <a href="index.html" class="brand-wrap" aria-label="Home page">
+          <img class="brand-logo" src="images/b86a60e8-1b83-4315-a8e8-46578ff7e3ae.png" alt="First Dest Consult logo" />
+        </a>
+
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div class="nav-links">
+          <a href="index.html#home">Home</a>
+          <a href="index.html#services">Services</a>
+          <a href="index.html#about">About</a>
+          <a href="index.html#testimonials">Testimonials</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="page-main">
+      <section class="page-hero page-hero-small">
+        <div class="container page-hero-inner">
+          <div>
+            <p class="eyebrow dark">Work Abroad</p>
+            <h1>Explore job opportunities overseas</h1>
+            <p>Tell us about your profile and preferred countries, and our team will guide you toward the right work opportunity.</p>
+          </div>
+          <a class="secondary-btn" href="index.html">Back to Home</a>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container study-abroad-shell">
+          <div class="study-abroad-layout">
+            <div class="study-abroad-copy">
+              <p class="eyebrow dark">Global opportunities</p>
+              <h2>Build your future abroad with expert support.</h2>
+              <ul class="document-help-list">
+                <li>Job and visa guidance</li>
+                <li>Country selection support</li>
+                <li>Qualification review</li>
+                <li>Application planning</li>
+              </ul>
+            </div>
+
+            <form id="work-abroad-form" class="study-abroad-form" novalidate>
+              <div class="form-grid two-col">
+                <div class="form-field full-width">
+                  <label for="workName">Name</label>
+                  <input id="workName" name="name" type="text" placeholder="Enter your full name" required />
+                </div>
+
+                <div class="form-field">
+                  <label for="workPhone">Phone Number</label>
+                  <input id="workPhone" name="phone" type="tel" placeholder="Enter your phone number" required />
+                </div>
+
+                <div class="form-field">
+                  <label for="workEmail">Email</label>
+                  <input id="workEmail" name="email" type="email" placeholder="Enter your email address" required />
+                </div>
+
+                <div class="form-field full-width">
+                  <label for="workQualification">Qualification</label>
+                  <input id="workQualification" name="qualification" type="text" placeholder="e.g. Diploma in Accounting" required />
+                </div>
+
+                <div class="form-field full-width">
+                  <label>Country of choice (choose up to 3 countries)</label>
+                  <div class="country-choice-grid">
+                    <label class="country-choice-item"><input type="checkbox" name="countryChoice" value="Dubai" /> <span>Dubai</span></label>
+                    <label class="country-choice-item"><input type="checkbox" name="countryChoice" value="Qatar" /> <span>Qatar</span></label>
+                    <label class="country-choice-item"><input type="checkbox" name="countryChoice" value="Malaysia" /> <span>Malaysia</span></label>
+                    <label class="country-choice-item"><input type="checkbox" name="countryChoice" value="Albania" /> <span>Albania</span></label>
+                    <label class="country-choice-item"><input type="checkbox" name="countryChoice" value="Canada" /> <span>Canada</span></label>
+                    <label class="country-choice-item"><input type="checkbox" name="countryChoice" value="UK" /> <span>UK</span></label>
+                  </div>
+
+                  <div class="selected-country-wrap">
+                    <div class="selected-country-label">Selected countries</div>
+                    <div id="workSelectedCountryList" class="selected-country-list" aria-live="polite"></div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="primary-btn form-submit-btn">Submit Request</button>
+              <p id="work-abroad-status" class="form-status" aria-live="polite"></p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <h3>First Dest Consult</h3>
+          <p>Connecting you to the world.</p>
+        </div>
+        <div class="footer-links">
+          <a href="index.html#services">Services</a>
+          <a href="index.html#about">About</a>
+          <a href="contact.html">Contact</a>
+        </div>
+        <div class="footer-contact">
+          <a href="tel:+233598925563">+233 598925563</a>
+          <span>Adenta Barrier, near ECG substation Accra, Ghana</span>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="container">© <span id="year"></span> First Dest Consult. All rights reserved.</div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

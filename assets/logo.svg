@@ -1,0 +1,29 @@
+<svg width="1200" height="1000" viewBox="0 0 1200 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="orangeBase" x1="260" y1="80" x2="770" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFAC3D"/>
+      <stop offset="0.5" stop-color="#F79B2A"/>
+      <stop offset="1" stop-color="#F57A00"/>
+    </linearGradient>
+    <linearGradient id="blueWave" x1="560" y1="200" x2="1040" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1EB5FF"/>
+      <stop offset="1" stop-color="#0A6EDB"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="480" cy="410" r="310" fill="url(#orangeBase)"/>
+
+  <path d="M0 480C120 406 191 387 316 364C533 314 676 382 794 446C916 513 1012 542 1163 546V800H0V480Z" fill="url(#blueWave)"/>
+
+  <path d="M285 518C382 454 546 420 667 413C618 454 570 503 518 548C468 591 400 629 307 610C290 607 284 565 285 518Z" fill="#F8F8F8" opacity="0.95"/>
+
+  <path d="M456 400C571 346 675 310 780 225C770 293 741 365 688 424C648 470 597 500 529 532C510 539 490 540 472 530C438 511 430 454 456 400Z" fill="#F8F8F8" opacity="0.96"/>
+
+  <path d="M460 286C551 214 625 176 758 144L788 190L679 222L610 265L549 291L469 308L460 286Z" fill="#0B6EDB"/>
+  <path d="M588 166L745 108L857 166L683 223L588 166Z" fill="#0B6EDB"/>
+  <path d="M522 289L550 212L620 229L591 304L522 289Z" fill="#0B6EDB"/>
+  <path d="M463 305L478 270L515 292L490 320L463 305Z" fill="#0B6EDB"/>
+
+  <text x="600" y="830" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="86" font-weight="900" fill="#0B6EDB" letter-spacing="1">GLOBAL VISA TRAVEL</text>
+  <text x="600" y="910" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="900" fill="#0B6EDB" letter-spacing="7">LTD</text>
+</svg>

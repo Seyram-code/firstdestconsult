@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact | First Dest Consult</title>
+    <meta
+      name="description"
+      content="Contact First Dest Consult for visa support, travel guidance, flight bookings, and study or work abroad assistance."
+    />
+    <link rel="icon" type="image/png" href="images/b86a60e8-1b83-4315-a8e8-46578ff7e3ae.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="navbar container" aria-label="Main navigation">
+        <a href="index.html" class="brand-wrap" aria-label="Home page">
+          <img class="brand-logo" src="images/b86a60e8-1b83-4315-a8e8-46578ff7e3ae.png" alt="First Dest Consult logo" />
+        </a>
+
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div class="nav-links">
+          <a href="index.html#home">Home</a>
+          <a href="index.html#services">Services</a>
+          <a href="index.html#about">About</a>
+          <a href="index.html#testimonials">Testimonials</a>
+          <a href="contact.html">Contact</a>
+          <a href="admin.html">Admin</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="page-main">
+      <section class="page-hero page-hero-small">
+        <div class="container page-hero-inner">
+          <div>
+            <p class="eyebrow dark">Contact Us</p>
+            <h1>Let’s make your travel plans happen</h1>
+            <p>Reach out for visa support, travel guidance, flight booking, hotel reservations, and more.</p>
+          </div>
+          <a class="secondary-btn" href="index.html">Back to Home</a>
+        </div>
+      </section>
+
+      <section class="consultation section" id="contact-page">
+        <div class="container consultation-grid">
+          <div class="consultation-copy">
+            <p class="eyebrow dark">Let’s Make Your Dreams Reality</p>
+            <h2>Reach out today and take the first step towards your global opportunities.</h2>
+
+            <form class="consultation-form" id="consultation-form" novalidate>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="name">Name</label>
+                  <input id="name" name="name" type="text" placeholder="Enter your full name" required />
+                </div>
+
+                <div class="form-field">
+                  <label for="email">Email</label>
+                  <input id="email" name="email" type="email" placeholder="Enter your email" required />
+                </div>
+
+                <div class="form-field">
+                  <label for="phone">Phone Number</label>
+                  <input id="phone" name="phone" type="tel" placeholder="Enter your phone number" required />
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="message">Message</label>
+                <textarea id="message" name="message" rows="5" placeholder="Tell us about your travel or visa needs" required></textarea>
+              </div>
+
+              <button type="submit" class="primary-btn form-submit-btn">Send Message</button>
+              <p class="form-status" aria-live="polite"></p>
+            </form>
+          </div>
+
+          <div class="contact-panel">
+            <h3>Get In Touch Instantly</h3>
+            <div class="contact-list">
+              <div class="contact-item">
+                <span class="icon">📞</span>
+                <div>
+                  <label>Telephone</label>
+                  <a href="tel:+233598925563">+233 598925563</a>
+                </div>
+              </div>
+              <div class="contact-item">
+                <span class="icon">📍</span>
+                <div>
+                  <label>Location</label>
+                  <p>Adenta Barrier, near ECG substation Accra, Ghana</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <h3>First Dest Consult</h3>
+          <p>Connecting you to the world.</p>
+        </div>
+        <div class="footer-links">
+          <a href="index.html#services">Services</a>
+          <a href="index.html#about">About</a>
+          <a href="contact.html">Contact</a>
+          <a href="admin.html">Admin Portal</a>
+        </div>
+        <div class="footer-contact">
+          <a href="tel:+233598925563">+233 598925563</a>
+          <span>Adenta Barrier, near ECG substation Accra, Ghana</span>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="container">© <span id="year"></span> First Dest Consult. All rights reserved.</div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

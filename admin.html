@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Portal | First Dest Consult</title>
+    <meta
+      name="description"
+      content="Admin portal for managing travel applications and published offers."
+    />
+    <link rel="icon" type="image/png" href="images/b86a60e8-1b83-4315-a8e8-46578ff7e3ae.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="navbar container" aria-label="Main navigation">
+        <a href="index.html" class="brand-wrap" aria-label="Home page">
+          <img class="brand-logo" src="images/b86a60e8-1b83-4315-a8e8-46578ff7e3ae.png" alt="First Dest Consult logo" />
+        </a>
+
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div class="nav-links">
+          <a href="index.html#home">Home</a>
+          <a href="index.html#services">Services</a>
+          <a href="index.html#about">About</a>
+          <a href="index.html#contact">Contact</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="portal-main">
+      <section class="page-hero page-hero-small">
+        <div class="container page-hero-inner">
+          <div>
+            <p class="eyebrow dark">Admin Portal</p>
+            <h1>Manage applications and job offers</h1>
+            <p>Review travel inquiries, monitor client applications, and publish new opportunities securely.</p>
+          </div>
+          <a class="secondary-btn" href="index.html">Back to Home</a>
+        </div>
+      </section>
+
+      <section class="page-section">
+        <div class="container admin-shell">
+          <div id="admin-login-panel" class="login-panel">
+            <div class="login-panel-header">
+              <span class="login-badge">Secure Access</span>
+              <h2>Admin Login</h2>
+            </div>
+            <p class="login-copy">Enter the admin access code to manage travel applications and publish job offers.</p>
+            <form id="admin-login-form" class="admin-login-form">
+              <div class="form-field">
+                <label for="adminPassword">Access Code</label>
+                <div class="password-input-wrap">
+                  <input id="adminPassword" type="password" placeholder="Enter admin code" required />
+                  <button
+                    type="button"
+                    class="show-password-toggle"
+                    aria-label="Show admin code"
+                    title="Show code"
+                    aria-pressed="false"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12Z" />
+                      <circle cx="12" cy="12" r="3.2" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <button type="submit" class="primary-btn">Enter Portal</button>
+              <p id="admin-login-status" class="form-status" aria-live="polite"></p>
+            </form>
+          </div>
+
+          <div id="admin-content" class="admin-content hidden">
+            <div class="dashboard-header">
+              <h2>Admin Dashboard</h2>
+              <div class="dashboard-actions">
+                <button type="button" id="view-submitted-applications" class="primary-btn">Travel Applications</button>
+                <button type="button" id="view-document-help-requests" class="primary-btn">Document Assistance Requests</button>
+                <button type="button" id="view-study-abroad-requests" class="primary-btn">Study Abroad Requests</button>
+                <button type="button" id="view-work-abroad-requests" class="primary-btn">Work Abroad Requests</button>
+                <button type="button" id="view-flight-booking-requests" class="primary-btn">Flight Booking Requests</button>
+                <button type="button" id="view-hotel-booking-requests" class="primary-btn">Hotel Reservation Requests</button>
+                <button type="button" id="admin-logout" class="secondary-btn">Logout</button>
+              </div>
+            </div>
+
+            <div class="admin-grid">
+              <div class="panel">
+                <h3>Reset Admin Access Code</h3>
+                <form id="admin-reset-form" class="job-offer-form">
+                  <div class="form-field">
+                    <label for="currentAdminCode">Current code</label>
+                    <div class="password-input-wrap">
+                      <input id="currentAdminCode" type="password" placeholder="Enter current code" required />
+                      <button
+                        type="button"
+                        class="show-password-toggle reset-code-toggle"
+                        data-target="currentAdminCode"
+                        aria-label="Show current admin code"
+                        title="Show current code"
+                        aria-pressed="false"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                          <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12Z" />
+                          <circle cx="12" cy="12" r="3.2" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="newAdminCode">New code</label>
+                    <div class="password-input-wrap">
+                      <input id="newAdminCode" type="password" placeholder="Enter new code" minlength="6" required />
+                      <button
+                        type="button"
+                        class="show-password-toggle reset-code-toggle"
+                        data-target="newAdminCode"
+                        aria-label="Show new admin code"
+                        title="Show new code"
+                        aria-pressed="false"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                          <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12Z" />
+                          <circle cx="12" cy="12" r="3.2" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="primary-btn">Reset Code</button>
+                  <p id="admin-reset-status" class="form-status" aria-live="polite"></p>
+                </form>
+              </div>
+
+              <div class="panel">
+                <h3>Post a New Offer / Job</h3>
+                <form id="job-offer-form" class="job-offer-form">
+                  <div class="form-field">
+                    <label for="offerTitle">Title</label>
+                    <input id="offerTitle" type="text" placeholder="e.g. Visit Visa to Canada" required />
+                  </div>
+
+                  <div class="form-field">
+                    <label for="offerLocation">Country</label>
+                    <input id="offerLocation" type="text" placeholder="e.g. Canada" required />
+                  </div>
+
+                  <div class="form-field">
+                    <label for="offerType">Offer Type</label>
+                    <select id="offerType" required>
+                      <option value="">Select type</option>
+                      <option value="Visit Visa">Visit Visa</option>
+                      <option value="Tourist Visa">Tourist Visa</option>
+                      <option value="Work Visa">Work Visa</option>
+                    </select>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="offerDescription">Description</label>
+                    <textarea id="offerDescription" rows="5" placeholder="Describe the visa opportunity" required></textarea>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="offerImage">Image Upload</label>
+                    <input id="offerImage" type="file" accept="image/*" />
+                  </div>
+
+                  <button type="submit" class="primary-btn">Publish Offer</button>
+                  <p id="offer-status" class="form-status" aria-live="polite"></p>
+                </form>
+              </div>
+
+              <div class="panel">
+                <h3>Published Offers</h3>
+                <div id="offer-list" class="list-stack"></div>
+              </div>
+            </div>
+
+            <div class="panel applications-panel hidden" id="applications-panel">
+              <h3>Travel Applications</h3>
+              <div id="application-list" class="list-stack"></div>
+            </div>
+
+            <div class="panel applications-panel hidden" id="document-help-panel">
+              <h3>Document Assistance Requests</h3>
+              <div id="document-help-list" class="list-stack"></div>
+            </div>
+
+            <div class="panel applications-panel hidden" id="study-abroad-panel">
+              <h3>Study Abroad Requests</h3>
+              <div id="study-abroad-list" class="list-stack"></div>
+            </div>
+
+            <div class="panel applications-panel hidden" id="work-abroad-panel">
+              <h3>Work Abroad Requests</h3>
+              <div id="work-abroad-list" class="list-stack"></div>
+            </div>
+
+            <div class="panel applications-panel hidden" id="flight-booking-panel">
+              <h3>Flight Booking Requests</h3>
+              <div id="flight-booking-list" class="list-stack"></div>
+            </div>
+
+            <div class="panel applications-panel hidden" id="hotel-booking-panel">
+              <h3>Hotel Reservation Requests</h3>
+              <div id="hotel-booking-list" class="list-stack"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <h3>First Dest Consult</h3>
+          <p>Connecting you to the world.</p>
+        </div>
+        <div class="footer-links">
+          <a href="index.html#services">Services</a>
+          <a href="index.html#about">About</a>
+          <a href="index.html#contact">Contact</a>
+        </div>
+        <div class="footer-contact">
+          <a href="tel:+233598925563">+233 598925563</a>
+          <span>Adenta Barrier, near ECG substation Accra, Ghana</span>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="container">© <span id="year"></span> First Dest Consult. All rights reserved.</div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
