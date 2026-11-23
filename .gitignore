@@ -5,6 +5,7 @@ node_modules/
 data.json
 admin-config.json
 uploads/offers/*
+database/.env
 
 /*-check*.png
 /*-final*.png

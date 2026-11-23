@@ -7,15 +7,24 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const {
+  closeDatabase,
+  deleteRecord,
+  findRecord,
+  initializeDatabase,
+  insertRecord,
+  listRecords,
+  pingDatabase,
+} = require('./dataStore');
+const {
   getAdminAccessCode,
   resetAdminAccessCode,
 } = require('./adminConfig');
-const { formatEmailSummary } = require('./emailSummary');
+const { createAdminNotifier } = require('./adminNotifications');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
-const ADMIN_EMAIL = 'info@globalvisatravel.org';
-const DATA_FILE = path.join(__dirname, 'data.json');
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@firstdestltd.com';
+const ADMIN_PHONE = process.env.ADMIN_PHONE || '+233243499242';
 const UPLOADS_DIR = path.join(__dirname, 'uploads', 'offers');
 
 const storage = multer.diskStorage({
@@ -37,21 +46,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.static(__dirname));
 
-function ensureDataFile() {
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({ applications: [], offers: [] }, null, 2));
-  }
-}
-
-function readData() {
-  ensureDataFile();
-  return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-}
-
-function writeData(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
-
 const SMTP_HOST = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
 const SMTP_PORT = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT || 465);
 const SMTP_SECURE = process.env.SMTP_SECURE !== undefined ? process.env.SMTP_SECURE === 'true' : true;
@@ -71,44 +65,42 @@ const transporter = SMTP_USER && SMTP_PASS
     })
   : null;
 
-async function sendAdminNotification(subject, payload) {
-  if (!transporter) {
-    console.warn('Email sending skipped: set SMTP_USER and SMTP_PASS (or EMAIL_USER and EMAIL_PASS) to enable SMTP delivery.');
-    return;
+const notifyAdmin = createAdminNotifier({
+  transporter: transporter && {
+    sendMail: (message) => transporter.sendMail({ from: SMTP_FROM, ...message }),
+  },
+  adminEmail: ADMIN_EMAIL,
+  adminPhone: ADMIN_PHONE,
+  frogUsername: process.env.FROG_SMS_USERNAME,
+  frogApiKey: process.env.FROG_SMS_API_KEY,
+  frogSenderId: process.env.FROG_SMS_SENDER_ID,
+});
+
+app.get('/api/health', async (req, res) => {
+  try {
+    await pingDatabase();
+    res.json({ ok: true, database: 'connected' });
+  } catch (error) {
+    console.error('Database health check failed:', error.message);
+    res.status(503).json({ ok: false, database: 'disconnected' });
   }
-
-  const emailBody = formatEmailSummary(payload);
-
-  await transporter.sendMail({
-    from: SMTP_FROM,
-    to: ADMIN_EMAIL,
-    subject,
-    text: emailBody,
-  });
-}
-
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true });
 });
 
 app.post('/api/application', async (req, res) => {
   try {
     const payload = req.body;
-    const data = readData();
-    data.applications.unshift({
+    await insertRecord('applications', {
       id: Date.now(),
       createdAt: new Date().toISOString(),
       ...payload,
     });
-    writeData(data);
 
-    try {
-      await sendAdminNotification(payload.type ? `New ${payload.type}` : 'New Travel Application', payload);
-    } catch (error) {
-      console.warn('Application saved, but email notification failed:', error.message);
-    }
+    const notifications = await notifyAdmin(
+      payload.type ? `New ${payload.type}` : 'New Travel Application',
+      payload,
+    );
 
-    res.status(200).json({ success: true, message: 'Application received' });
+    res.status(200).json({ success: true, message: 'Application received', notifications });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error submitting application' });
@@ -118,9 +110,7 @@ app.post('/api/application', async (req, res) => {
 app.post('/api/document-help', async (req, res) => {
   try {
     const payload = req.body || {};
-    const data = readData();
-    data.documentHelpRequests = data.documentHelpRequests || [];
-    data.documentHelpRequests.unshift({
+    const record = {
       id: Date.now(),
       createdAt: new Date().toISOString(),
       name: payload.name || '',
@@ -129,36 +119,12 @@ app.post('/api/document-help', async (req, res) => {
       currentCountry: payload.currentCountry || '',
       destinationCountry: payload.destinationCountry || '',
       documentTypes: Array.isArray(payload.documentTypes) ? payload.documentTypes : [payload.documentTypes].filter(Boolean),
-    });
-    writeData(data);
+    };
+    await insertRecord('documentHelpRequests', record);
 
-    try {
-      await sendAdminNotification('New Document Help Request', {
-        name: payload.name || '',
-        phone: payload.phone || '',
-        email: payload.email || '',
-        currentCountry: payload.currentCountry || '',
-        destinationCountry: payload.destinationCountry || '',
-        documentTypes: Array.isArray(payload.documentTypes) ? payload.documentTypes : [payload.documentTypes].filter(Boolean),
-      });
-    } catch (error) {
-      console.warn('Document help request saved, but email notification failed:', error.message);
-    }
+    const notifications = await notifyAdmin('New Document Help Request', record);
 
-    try {
-      await sendAdminNotification('New Document Help Request', {
-        name: payload.name || '',
-        phone: payload.phone || '',
-        email: payload.email || '',
-        currentCountry: payload.currentCountry || '',
-        destinationCountry: payload.destinationCountry || '',
-        documentTypes: Array.isArray(payload.documentTypes) ? payload.documentTypes : [payload.documentTypes].filter(Boolean),
-      });
-    } catch (error) {
-      console.warn('Document help request saved, but email notification failed:', error.message);
-    }
-
-    res.status(200).json({ success: true, message: 'Document help request received' });
+    res.status(200).json({ success: true, message: 'Document help request received', notifications });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error submitting document request' });
@@ -168,13 +134,11 @@ app.post('/api/document-help', async (req, res) => {
 app.post('/api/study-abroad', async (req, res) => {
   try {
     const payload = req.body || {};
-    const data = readData();
     const selectedCountries = Array.isArray(payload.countryChoice)
       ? payload.countryChoice
       : String(payload.countryChoice || '').split(',').map((item) => item.trim()).filter(Boolean);
 
-    data.studyAbroadRequests = data.studyAbroadRequests || [];
-    data.studyAbroadRequests.unshift({
+    const record = {
       id: Date.now(),
       createdAt: new Date().toISOString(),
       name: payload.name || '',
@@ -185,25 +149,12 @@ app.post('/api/study-abroad', async (req, res) => {
       degreeType: payload.degreeType || '',
       countryChoice: selectedCountries,
       programType: payload.programType || '',
-    });
-    writeData(data);
+    };
+    await insertRecord('studyAbroadRequests', record);
 
-    try {
-      await sendAdminNotification('New Study Abroad Request', {
-        name: payload.name || '',
-        phone: payload.phone || '',
-        email: payload.email || '',
-        qualification: payload.qualification || '',
-        program: payload.program || '',
-        degreeType: payload.degreeType || '',
-        countryChoice: selectedCountries,
-        programType: payload.programType || '',
-      });
-    } catch (error) {
-      console.warn('Study abroad request saved, but email notification failed:', error.message);
-    }
+    const notifications = await notifyAdmin('New Study Abroad Request', record);
 
-    res.status(200).json({ success: true, message: 'Study abroad request received' });
+    res.status(200).json({ success: true, message: 'Study abroad request received', notifications });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error submitting study abroad request' });
@@ -213,13 +164,11 @@ app.post('/api/study-abroad', async (req, res) => {
 app.post('/api/work-abroad', async (req, res) => {
   try {
     const payload = req.body || {};
-    const data = readData();
     const selectedCountries = Array.isArray(payload.countryChoice)
       ? payload.countryChoice
       : String(payload.countryChoice || '').split(',').map((item) => item.trim()).filter(Boolean);
 
-    data.workAbroadRequests = data.workAbroadRequests || [];
-    data.workAbroadRequests.unshift({
+    const record = {
       id: Date.now(),
       createdAt: new Date().toISOString(),
       name: payload.name || '',
@@ -227,22 +176,12 @@ app.post('/api/work-abroad', async (req, res) => {
       email: payload.email || '',
       qualification: payload.qualification || '',
       countryChoice: selectedCountries,
-    });
-    writeData(data);
+    };
+    await insertRecord('workAbroadRequests', record);
 
-    try {
-      await sendAdminNotification('New Work Abroad Request', {
-        name: payload.name || '',
-        phone: payload.phone || '',
-        email: payload.email || '',
-        qualification: payload.qualification || '',
-        countryChoice: selectedCountries,
-      });
-    } catch (error) {
-      console.warn('Work abroad request saved, but email notification failed:', error.message);
-    }
+    const notifications = await notifyAdmin('New Work Abroad Request', record);
 
-    res.status(200).json({ success: true, message: 'Work abroad request received' });
+    res.status(200).json({ success: true, message: 'Work abroad request received', notifications });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error submitting work abroad request' });
@@ -252,10 +191,8 @@ app.post('/api/work-abroad', async (req, res) => {
 app.post('/api/flight-booking', async (req, res) => {
   try {
     const payload = req.body || {};
-    const data = readData();
 
-    data.flightBookings = data.flightBookings || [];
-    data.flightBookings.unshift({
+    const record = {
       id: Date.now(),
       createdAt: new Date().toISOString(),
       currentCountry: payload.currentCountry || '',
@@ -266,25 +203,12 @@ app.post('/api/flight-booking', async (req, res) => {
       departureDate: payload.departureDate || '',
       returnDate: payload.returnDate || '',
       airline: payload.airline || 'No preference',
-    });
-    writeData(data);
+    };
+    await insertRecord('flightBookings', record);
 
-    try {
-      await sendAdminNotification('New Flight Booking Request', {
-        currentCountry: payload.currentCountry || '',
-        currentAirport: payload.currentAirport || '',
-        destinationCountry: payload.destinationCountry || '',
-        destinationAirport: payload.destinationAirport || '',
-        destinationCity: payload.destinationCity || '',
-        departureDate: payload.departureDate || '',
-        returnDate: payload.returnDate || '',
-        airline: payload.airline || 'No preference',
-      });
-    } catch (error) {
-      console.warn('Flight booking request saved, but email notification failed:', error.message);
-    }
+    const notifications = await notifyAdmin('New Flight Booking Request', record);
 
-    res.status(200).json({ success: true, message: 'Flight booking request received' });
+    res.status(200).json({ success: true, message: 'Flight booking request received', notifications });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error submitting flight booking request' });
@@ -294,10 +218,8 @@ app.post('/api/flight-booking', async (req, res) => {
 app.post('/api/hotel-booking', async (req, res) => {
   try {
     const payload = req.body || {};
-    const data = readData();
 
-    data.hotelBookings = data.hotelBookings || [];
-    data.hotelBookings.unshift({
+    const record = {
       id: Date.now(),
       createdAt: new Date().toISOString(),
       destinationCountry: payload.destinationCountry || '',
@@ -306,37 +228,25 @@ app.post('/api/hotel-booking', async (req, res) => {
       checkOutDate: payload.checkOutDate || '',
       adults: payload.adults || '',
       kids: payload.kids || '',
-    });
-    writeData(data);
+    };
+    await insertRecord('hotelBookings', record);
 
-    try {
-      await sendAdminNotification('New Hotel Booking Request', {
-        destinationCountry: payload.destinationCountry || '',
-        destinationCity: payload.destinationCity || '',
-        checkInDate: payload.checkInDate || '',
-        checkOutDate: payload.checkOutDate || '',
-        adults: payload.adults || '',
-        kids: payload.kids || '',
-      });
-    } catch (error) {
-      console.warn('Hotel booking request saved, but email notification failed:', error.message);
-    }
+    const notifications = await notifyAdmin('New Hotel Booking Request', record);
 
-    res.status(200).json({ success: true, message: 'Hotel reservation request received' });
+    res.status(200).json({ success: true, message: 'Hotel reservation request received', notifications });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error submitting hotel reservation request' });
   }
 });
 
-app.post('/api/offers', upload.single('image'), (req, res) => {
+app.post('/api/offers', upload.single('image'), async (req, res) => {
   try {
     const payload = req.body || {};
     const file = req.file;
     const imagePath = file ? `/uploads/offers/${file.filename}` : payload.image || '';
-    const data = readData();
 
-    data.offers.unshift({
+    await insertRecord('offers', {
       id: Date.now(),
       createdAt: new Date().toISOString(),
       title: payload.title || '',
@@ -348,7 +258,6 @@ app.post('/api/offers', upload.single('image'), (req, res) => {
       image: imagePath,
     });
 
-    writeData(data);
     res.status(200).json({ success: true, message: 'Offer published', image: imagePath });
   } catch (error) {
     console.error(error);
@@ -356,17 +265,18 @@ app.post('/api/offers', upload.single('image'), (req, res) => {
   }
 });
 
-app.get('/api/applications', (req, res) => {
-  const data = readData();
-  res.json({ applications: data.applications || [] });
+app.get('/api/applications', async (req, res) => {
+  try {
+    res.json({ applications: await listRecords('applications') });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error retrieving applications' });
+  }
 });
 
-app.delete('/api/applications/:id', (req, res) => {
+app.delete('/api/applications/:id', async (req, res) => {
   try {
-    const data = readData();
-    const targetId = Number(req.params.id);
-    data.applications = (data.applications || []).filter((item) => Number(item.id) !== targetId);
-    writeData(data);
+    await deleteRecord('applications', req.params.id);
     res.json({ success: true, message: 'Application deleted' });
   } catch (error) {
     console.error(error);
@@ -374,17 +284,18 @@ app.delete('/api/applications/:id', (req, res) => {
   }
 });
 
-app.get('/api/document-help', (req, res) => {
-  const data = readData();
-  res.json({ requests: data.documentHelpRequests || [] });
+app.get('/api/document-help', async (req, res) => {
+  try {
+    res.json({ requests: await listRecords('documentHelpRequests') });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error retrieving document requests' });
+  }
 });
 
-app.delete('/api/document-help/:id', (req, res) => {
+app.delete('/api/document-help/:id', async (req, res) => {
   try {
-    const data = readData();
-    const targetId = Number(req.params.id);
-    data.documentHelpRequests = (data.documentHelpRequests || []).filter((item) => Number(item.id) !== targetId);
-    writeData(data);
+    await deleteRecord('documentHelpRequests', req.params.id);
     res.json({ success: true, message: 'Document help request deleted' });
   } catch (error) {
     console.error(error);
@@ -392,17 +303,18 @@ app.delete('/api/document-help/:id', (req, res) => {
   }
 });
 
-app.get('/api/study-abroad', (req, res) => {
-  const data = readData();
-  res.json({ requests: data.studyAbroadRequests || [] });
+app.get('/api/study-abroad', async (req, res) => {
+  try {
+    res.json({ requests: await listRecords('studyAbroadRequests') });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error retrieving study requests' });
+  }
 });
 
-app.delete('/api/study-abroad/:id', (req, res) => {
+app.delete('/api/study-abroad/:id', async (req, res) => {
   try {
-    const data = readData();
-    const targetId = Number(req.params.id);
-    data.studyAbroadRequests = (data.studyAbroadRequests || []).filter((item) => Number(item.id) !== targetId);
-    writeData(data);
+    await deleteRecord('studyAbroadRequests', req.params.id);
     res.json({ success: true, message: 'Study abroad request deleted' });
   } catch (error) {
     console.error(error);
@@ -410,17 +322,18 @@ app.delete('/api/study-abroad/:id', (req, res) => {
   }
 });
 
-app.get('/api/work-abroad', (req, res) => {
-  const data = readData();
-  res.json({ requests: data.workAbroadRequests || [] });
+app.get('/api/work-abroad', async (req, res) => {
+  try {
+    res.json({ requests: await listRecords('workAbroadRequests') });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error retrieving work requests' });
+  }
 });
 
-app.delete('/api/work-abroad/:id', (req, res) => {
+app.delete('/api/work-abroad/:id', async (req, res) => {
   try {
-    const data = readData();
-    const targetId = Number(req.params.id);
-    data.workAbroadRequests = (data.workAbroadRequests || []).filter((item) => Number(item.id) !== targetId);
-    writeData(data);
+    await deleteRecord('workAbroadRequests', req.params.id);
     res.json({ success: true, message: 'Work abroad request deleted' });
   } catch (error) {
     console.error(error);
@@ -428,17 +341,18 @@ app.delete('/api/work-abroad/:id', (req, res) => {
   }
 });
 
-app.get('/api/flight-booking', (req, res) => {
-  const data = readData();
-  res.json({ requests: data.flightBookings || [] });
+app.get('/api/flight-booking', async (req, res) => {
+  try {
+    res.json({ requests: await listRecords('flightBookings') });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error retrieving flight bookings' });
+  }
 });
 
-app.delete('/api/flight-booking/:id', (req, res) => {
+app.delete('/api/flight-booking/:id', async (req, res) => {
   try {
-    const data = readData();
-    const targetId = Number(req.params.id);
-    data.flightBookings = (data.flightBookings || []).filter((item) => Number(item.id) !== targetId);
-    writeData(data);
+    await deleteRecord('flightBookings', req.params.id);
     res.json({ success: true, message: 'Flight booking request deleted' });
   } catch (error) {
     console.error(error);
@@ -446,17 +360,18 @@ app.delete('/api/flight-booking/:id', (req, res) => {
   }
 });
 
-app.get('/api/hotel-booking', (req, res) => {
-  const data = readData();
-  res.json({ requests: data.hotelBookings || [] });
+app.get('/api/hotel-booking', async (req, res) => {
+  try {
+    res.json({ requests: await listRecords('hotelBookings') });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error retrieving hotel bookings' });
+  }
 });
 
-app.delete('/api/hotel-booking/:id', (req, res) => {
+app.delete('/api/hotel-booking/:id', async (req, res) => {
   try {
-    const data = readData();
-    const targetId = Number(req.params.id);
-    data.hotelBookings = (data.hotelBookings || []).filter((item) => Number(item.id) !== targetId);
-    writeData(data);
+    await deleteRecord('hotelBookings', req.params.id);
     res.json({ success: true, message: 'Hotel reservation request deleted' });
   } catch (error) {
     console.error(error);
@@ -464,24 +379,25 @@ app.delete('/api/hotel-booking/:id', (req, res) => {
   }
 });
 
-app.get('/api/offers', (req, res) => {
-  const data = readData();
-  res.json({ offers: data.offers || [] });
+app.get('/api/offers', async (req, res) => {
+  try {
+    res.json({ offers: await listRecords('offers') });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error retrieving offers' });
+  }
 });
 
-app.delete('/api/offers/:id', (req, res) => {
+app.delete('/api/offers/:id', async (req, res) => {
   try {
-    const data = readData();
-    const targetId = Number(req.params.id);
-    const offer = (data.offers || []).find((item) => Number(item.id) === targetId);
+    const offer = await findRecord('offers', req.params.id);
     if (offer && offer.image) {
       const imagePath = path.join(__dirname, offer.image.replace(/^\//, ''));
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
       }
     }
-    data.offers = (data.offers || []).filter((item) => Number(item.id) !== targetId);
-    writeData(data);
+    await deleteRecord('offers', req.params.id);
     res.json({ success: true, message: 'Offer deleted' });
   } catch (error) {
     console.error(error);
@@ -520,6 +436,15 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+async function startServer() {
+  await initializeDatabase();
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
+}
+
+startServer().catch(async (error) => {
+  console.error(`Unable to start server: ${error.message}`);
+  await closeDatabase();
+  process.exitCode = 1;
 });

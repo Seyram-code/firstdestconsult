@@ -864,6 +864,125 @@ img {
   box-shadow: 0 0 0 4px rgba(27, 77, 187, 0.08);
 }
 
+.country-combobox {
+  position: relative;
+  width: 100%;
+}
+
+.country-combobox.is-open {
+  z-index: 30;
+}
+
+.country-combobox input[role="combobox"] {
+  padding-right: 48px;
+}
+
+.country-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.country-toggle:hover,
+.country-toggle:focus-visible {
+  outline: none;
+  background: #f1f5f9;
+  color: var(--primary);
+}
+
+.country-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  transition: transform 0.18s ease;
+}
+
+.country-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.country-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  z-index: 40;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 7px;
+  border: 1px solid rgba(6, 29, 61, 0.1);
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: 0 18px 40px rgba(6, 29, 61, 0.16);
+}
+
+.country-suggestions[hidden] {
+  display: none;
+}
+
+.country-suggestions-heading,
+.country-suggestions-hint {
+  padding: 8px 11px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.country-suggestions-heading {
+  text-transform: uppercase;
+}
+
+.country-suggestion {
+  display: block;
+  width: 100%;
+  padding: 10px 11px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.country-suggestion:hover,
+.country-suggestion.is-active {
+  background: #f1f5f9;
+  color: var(--primary);
+}
+
+.country-suggestions-empty {
+  margin: 0;
+  padding: 12px 11px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.country-suggestions-hint {
+  margin-top: 4px;
+  border-top: 1px solid rgba(6, 29, 61, 0.08);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
 .form-field textarea {
   resize: vertical;
   min-height: 120px;

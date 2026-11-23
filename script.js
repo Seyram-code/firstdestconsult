@@ -47,22 +47,169 @@ if (countrySuggestionsList && countrySearchInputs.length) {
   const allCountryOptions = Array.from(countrySuggestionsList.querySelectorAll('option'))
     .map((option) => option.value.trim())
     .filter(Boolean);
+  const popularCountries = [
+    'Ghana',
+    'United Kingdom',
+    'United States',
+    'Canada',
+    'United Arab Emirates',
+    'Germany',
+    'France',
+    'Australia',
+  ].filter((country) => allCountryOptions.includes(country));
 
-  function rebuildCountrySuggestions(input) {
-    const query = normalizeCountrySearch(input.value);
+  countrySearchInputs.forEach((input, inputIndex) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'country-combobox';
+    input.before(wrapper);
+    wrapper.append(input);
 
-    if (!query) {
-      countrySuggestionsList.innerHTML = allCountryOptions.map((country) => `<option value="${country}"></option>`).join('');
-      return;
-    }
+    const suggestionPanel = document.createElement('div');
+    suggestionPanel.className = 'country-suggestions';
+    suggestionPanel.hidden = true;
 
-    const matches = allCountryOptions.filter((country) => normalizeCountrySearch(country).includes(query)).slice(0, 80);
-    countrySuggestionsList.innerHTML = matches.map((country) => `<option value="${country}"></option>`).join('');
-  }
+    const listbox = document.createElement('div');
+    const listboxId = `country-options-${inputIndex + 1}`;
+    listbox.id = listboxId;
+    listbox.setAttribute('role', 'listbox');
+    suggestionPanel.append(listbox);
+    wrapper.append(suggestionPanel);
 
-  countrySearchInputs.forEach((input) => {
-    input.addEventListener('input', () => rebuildCountrySuggestions(input));
-    input.addEventListener('focus', () => rebuildCountrySuggestions(input));
+    const toggle = document.createElement('button');
+    toggle.className = 'country-toggle';
+    toggle.type = 'button';
+    toggle.setAttribute('aria-label', 'Show country options');
+    toggle.setAttribute('aria-controls', listboxId);
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.innerHTML = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" /></svg>';
+    wrapper.append(toggle);
+
+    input.removeAttribute('list');
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('aria-haspopup', 'listbox');
+    input.setAttribute('aria-controls', listboxId);
+    input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('autocomplete', 'off');
+
+    let activeIndex = -1;
+    let visibleCountries = [];
+
+    const closeListbox = () => {
+      suggestionPanel.hidden = true;
+      wrapper.classList.remove('is-open');
+      input.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
+      activeIndex = -1;
+    };
+
+    const setActiveOption = (index) => {
+      const options = Array.from(listbox.querySelectorAll('[role="option"]'));
+      if (!options.length) return;
+
+      activeIndex = (index + options.length) % options.length;
+      options.forEach((option, optionIndex) => {
+        const isActive = optionIndex === activeIndex;
+        option.setAttribute('aria-selected', String(isActive));
+        option.classList.toggle('is-active', isActive);
+      });
+      input.setAttribute('aria-activedescendant', options[activeIndex].id);
+      options[activeIndex].scrollIntoView({ block: 'nearest' });
+    };
+
+    const renderOptions = () => {
+      const query = normalizeCountrySearch(input.value);
+      visibleCountries = query
+        ? allCountryOptions
+          .filter((country) => normalizeCountrySearch(country).includes(query))
+          .sort((a, b) => {
+            const aStartsWithQuery = normalizeCountrySearch(a).startsWith(query);
+            const bStartsWithQuery = normalizeCountrySearch(b).startsWith(query);
+            return Number(bStartsWithQuery) - Number(aStartsWithQuery) || a.localeCompare(b);
+          })
+          .slice(0, 8)
+        : popularCountries;
+
+      suggestionPanel.replaceChildren();
+      listbox.replaceChildren();
+      activeIndex = -1;
+
+      const heading = document.createElement('div');
+      heading.className = 'country-suggestions-heading';
+      heading.textContent = query ? 'Matching countries' : 'Popular destinations';
+      suggestionPanel.append(heading, listbox);
+
+      if (visibleCountries.length) {
+        visibleCountries.forEach((country, optionIndex) => {
+          const option = document.createElement('button');
+          option.className = 'country-suggestion';
+          option.type = 'button';
+          option.id = `${listboxId}-option-${optionIndex + 1}`;
+          option.setAttribute('role', 'option');
+          option.setAttribute('aria-selected', 'false');
+          option.textContent = country;
+          option.addEventListener('pointerdown', (event) => event.preventDefault());
+          option.addEventListener('click', () => {
+            input.value = country;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            closeListbox();
+            input.focus();
+          });
+          listbox.append(option);
+        });
+      } else {
+        const emptyMessage = document.createElement('p');
+        emptyMessage.className = 'country-suggestions-empty';
+        emptyMessage.setAttribute('role', 'status');
+        emptyMessage.textContent = 'No countries found. Try another spelling.';
+        suggestionPanel.append(emptyMessage);
+      }
+
+      const hint = document.createElement('div');
+      hint.className = 'country-suggestions-hint';
+      hint.textContent = query ? 'Keep typing to refine your search' : 'Type to search all countries';
+      suggestionPanel.append(hint);
+
+      suggestionPanel.hidden = false;
+      wrapper.classList.add('is-open');
+      input.setAttribute('aria-expanded', 'true');
+      toggle.setAttribute('aria-expanded', 'true');
+    };
+
+    input.addEventListener('focus', renderOptions);
+    input.addEventListener('input', renderOptions);
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        if (suggestionPanel.hidden) renderOptions();
+        setActiveOption(activeIndex + 1);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (suggestionPanel.hidden) renderOptions();
+        setActiveOption(activeIndex < 0 ? visibleCountries.length - 1 : activeIndex - 1);
+      } else if (event.key === 'Enter' && !suggestionPanel.hidden && activeIndex >= 0) {
+        event.preventDefault();
+        input.value = visibleCountries[activeIndex];
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        closeListbox();
+      } else if (event.key === 'Escape') {
+        closeListbox();
+      }
+    });
+
+    toggle.addEventListener('click', () => {
+      if (suggestionPanel.hidden) {
+        input.focus();
+        renderOptions();
+      } else {
+        closeListbox();
+      }
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+      if (!wrapper.contains(event.target)) closeListbox();
+    });
   });
 }
 
