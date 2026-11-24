@@ -47,8 +47,11 @@ configured. Delivery outcomes are returned under the API response's
 `notifications` field and failed delivery is logged; saving a request does not
 depend on notification delivery.
 
-Public CSS, JavaScript, and image assets are cached for five minutes. API
+Public CSS, JavaScript, and image assets are cached for five minutes. API JSON
 responses and private application documents are not covered by this cache.
+Offer images are stored with their offer records in MySQL so they survive app
+redeployments. Upload JPEG, PNG, GIF, or WebP images up to 8 MB; the public
+offers API returns image URLs and serves image bytes separately.
 
 For FROG SMS, request the API key and username from FROG account settings, then
 set `FROG_SMS_USERNAME`, `FROG_SMS_API_KEY`, and an approved

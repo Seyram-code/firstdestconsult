@@ -23,6 +23,12 @@ const {
 } = require('./adminConfig');
 const { createAdminNotifier, createApplicantNotifier } = require('./adminNotifications');
 const { normalizeApplicantPrograms, normalizeOfferPrograms } = require('./programCatalog');
+const {
+  getOfferImageFields,
+  OFFER_IMAGE_MAX_SIZE,
+  toPublicOffer,
+  validateOfferImage,
+} = require('./offerImageStorage');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -51,18 +57,29 @@ function setPublicAssetCacheHeaders(res, filePath) {
   }
 }
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-    cb(null, UPLOADS_DIR);
-  },
-  filename: (_req, file, cb) => {
-    const safeName = file.originalname.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_.-]/g, '');
-    const timestamp = Date.now();
-    cb(null, `${timestamp}-${safeName}`);
-  },
+const offerImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: OFFER_IMAGE_MAX_SIZE, files: 1 },
 });
-const upload = multer({ storage });
+function handleOfferImageUpload(req, res, next) {
+  offerImageUpload.single('image')(req, res, (error) => {
+    if (error) {
+      const tooLarge = error.code === 'LIMIT_FILE_SIZE';
+      res.status(tooLarge ? 413 : 400).json({
+        success: false,
+        message: tooLarge ? 'Offer images must be 8 MB or smaller.' : error.message,
+      });
+      return;
+    }
+
+    const validationError = req.file ? validateOfferImage(req.file) : null;
+    if (validationError) {
+      res.status(400).json({ success: false, message: validationError });
+      return;
+    }
+    next();
+  });
+}
 const applicationUpload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => {
@@ -404,11 +421,10 @@ app.post('/api/hotel-booking', async (req, res) => {
   }
 });
 
-app.post('/api/offers', upload.single('image'), async (req, res) => {
+app.post('/api/offers', handleOfferImageUpload, async (req, res) => {
   try {
     const payload = req.body || {};
     const file = req.file;
-    const imagePath = file ? `/uploads/offers/${file.filename}` : payload.image || '';
     let requiredDocuments = [];
 
     if (payload.requiredDocuments) {
@@ -431,8 +447,12 @@ app.post('/api/offers', upload.single('image'), async (req, res) => {
       return;
     }
 
+    const id = Date.now();
+    const imageFields = file
+      ? getOfferImageFields(file, id)
+      : { image: payload.image || '' };
     await insertRecord('offers', {
-      id: Date.now(),
+      id,
       createdAt: new Date().toISOString(),
       title: payload.title || '',
       company: payload.company || '',
@@ -442,17 +462,23 @@ app.post('/api/offers', upload.single('image'), async (req, res) => {
       studyPrograms: programs,
       requiredDocuments: requiredDocuments.map((document) => document.trim()),
       link: payload.link || '',
-      image: imagePath,
+      ...imageFields,
     });
 
-    res.status(200).json({ success: true, message: 'Offer published', image: imagePath, requiredDocuments, studyPrograms: programs });
+    res.status(200).json({
+      success: true,
+      message: 'Offer published',
+      image: imageFields.image,
+      requiredDocuments,
+      studyPrograms: programs,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error publishing offer' });
   }
 });
 
-app.put('/api/offers/:id', upload.single('image'), async (req, res) => {
+app.put('/api/offers/:id', handleOfferImageUpload, async (req, res) => {
   try {
     const existingOffer = await findRecord('offers', req.params.id);
     if (!existingOffer) {
@@ -490,7 +516,7 @@ app.put('/api/offers/:id', upload.single('image'), async (req, res) => {
     }
 
     const file = req.file;
-    const imagePath = file ? `/uploads/offers/${file.filename}` : existingOffer.image || '';
+    const imageFields = getOfferImageFields(file, existingOffer.id, existingOffer);
     const updatedOffer = {
       ...existingOffer,
       id: existingOffer.id,
@@ -500,14 +526,14 @@ app.put('/api/offers/:id', upload.single('image'), async (req, res) => {
       description: payload.description || existingOffer.description || '',
       studyPrograms: programs,
       requiredDocuments: requiredDocuments.map((document) => document.trim()),
-      image: imagePath,
+      ...imageFields,
     };
 
     await updateRecord('offers', updatedOffer);
     res.status(200).json({
       success: true,
       message: 'Offer updated',
-      image: imagePath,
+      image: updatedOffer.image,
       requiredDocuments: updatedOffer.requiredDocuments,
       studyPrograms: updatedOffer.studyPrograms,
     });
@@ -775,21 +801,47 @@ app.delete('/api/hotel-booking/:id', async (req, res) => {
 
 app.get('/api/offers', async (req, res) => {
   try {
-    res.json({ offers: await listRecords('offers') });
+    const offers = await listRecords('offers');
+    res.json({ offers: offers.map(toPublicOffer) });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error retrieving offers' });
   }
 });
 
+app.get('/api/offers/:id/image', async (req, res) => {
+  try {
+    const offer = await findRecord('offers', req.params.id);
+    if (!offer || !offer.imageData || !offer.imageContentType) {
+      res.status(404).json({ success: false, message: 'Offer image not found.' });
+      return;
+    }
+
+    const image = Buffer.from(offer.imageData, 'base64');
+    if (!image.length) {
+      res.status(404).json({ success: false, message: 'Offer image not found.' });
+      return;
+    }
+
+    res.setHeader('Content-Type', offer.imageContentType);
+    res.setHeader('Content-Length', image.length);
+    res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.send(image);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error retrieving offer image' });
+  }
+});
+
 app.delete('/api/offers/:id', async (req, res) => {
   try {
     const offer = await findRecord('offers', req.params.id);
-    if (offer && offer.image) {
-      const imagePath = path.join(__dirname, offer.image.replace(/^\//, ''));
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
+    const legacyImagePath = offer?.image?.startsWith('/uploads/offers/')
+      ? path.join(UPLOADS_DIR, path.basename(offer.image))
+      : null;
+    if (legacyImagePath && fs.existsSync(legacyImagePath)) {
+      fs.unlinkSync(legacyImagePath);
     }
     const applications = await listRecords('offerApplications');
     for (const application of applications.filter((item) => String(item.offerId) === String(req.params.id))) {
