@@ -17,7 +17,7 @@
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body class="home-page">
     <header class="site-header">
       <nav class="navbar container" aria-label="Main navigation">
         <a href="index.html" class="brand-wrap" aria-label="Home page">
@@ -43,25 +43,38 @@
 
     <main id="home">
       <section class="hero">
-        <div class="hero-overlay"></div>
         <div class="container hero-inner">
           <div class="hero-copy">
-            <div class="badge-pill">◌ Trusted visa &amp; travel specialists</div>
-            <h1>Your Trusted Partner for<br />Global Travel &amp; Opportunities</h1>
+            <p class="eyebrow dark">Your journey, thoughtfully planned</p>
+            <h1>Your next chapter <span>starts beyond borders.</span></h1>
             <p class="lead">
-              From visa support to study/work abroad, hotel &amp; flight bookings we handle the details so you can focus on your journey.
+              Personal support for visas, study and work opportunities, flights, and stays — from your first question to your next destination.
             </p>
             <div class="cta-row">
-              <a class="primary-btn" href="application.html">Start Your Application Today</a>
+              <a class="primary-btn" href="application.html">Plan your journey <span aria-hidden="true">&rarr;</span></a>
+              <a class="secondary-btn" href="#services">Explore our services</a>
             </div>
             <ul class="hero-pills">
-              <li>Canada Immigration</li>
-              <li>USA Visas</li>
-              <li>UK Study Permits</li>
-              <li>Australia Work Visas</li>
-              <li>Global Flight Booking</li>
-              <li>Hotel Reservations</li>
+              <li>Visa &amp; document support</li>
+              <li>Study &amp; work pathways</li>
+              <li>Flights &amp; accommodation</li>
             </ul>
+          </div>
+          <div class="hero-art">
+            <img
+              src="assets/my-hero-img.jpg"
+              alt="Traveller walking through a bright airport terminal"
+              fetchpriority="high"
+            />
+            <div class="hero-art-caption">
+              <span>FIRST DEST CONSULT</span>
+              <strong>Make room for what’s next.</strong>
+            </div>
+            <div class="hero-art-badge" aria-hidden="true">
+              <span>YOUR</span>
+              <strong>WORLD</strong>
+              <span>AWAITS</span>
+            </div>
           </div>
         </div>
       </section>
