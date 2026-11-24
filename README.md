@@ -47,6 +47,9 @@ configured. Delivery outcomes are returned under the API response's
 `notifications` field and failed delivery is logged; saving a request does not
 depend on notification delivery.
 
+Public CSS, JavaScript, and image assets are cached for five minutes. API
+responses and private application documents are not covered by this cache.
+
 For FROG SMS, request the API key and username from FROG account settings, then
 set `FROG_SMS_USERNAME`, `FROG_SMS_API_KEY`, and an approved
 `FROG_SMS_SENDER_ID`. The integration uses

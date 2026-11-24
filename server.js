@@ -31,6 +31,24 @@ const UPLOADS_DIR = path.join(__dirname, 'uploads', 'offers');
 const APPLICATION_UPLOADS_DIR = path.join(__dirname, '.private-uploads', 'applications');
 const ADMIN_SESSION_COOKIE = 'fdt_admin_session';
 const ADMIN_SESSION_MAX_AGE = 8 * 60 * 60 * 1000;
+const CACHEABLE_PUBLIC_ASSET_EXTENSIONS = new Set([
+  '.css',
+  '.ico',
+  '.jpeg',
+  '.jpg',
+  '.js',
+  '.png',
+  '.svg',
+  '.webp',
+  '.woff',
+  '.woff2',
+]);
+
+function setPublicAssetCacheHeaders(res, filePath) {
+  if (CACHEABLE_PUBLIC_ASSET_EXTENSIONS.has(path.extname(filePath).toLowerCase())) {
+    res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+  }
+}
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
@@ -78,8 +96,8 @@ app.use(cors());
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use('/uploads/offers', express.static(UPLOADS_DIR));
-app.use(express.static(__dirname));
+app.use('/uploads/offers', express.static(UPLOADS_DIR, { setHeaders: setPublicAssetCacheHeaders }));
+app.use(express.static(__dirname, { setHeaders: setPublicAssetCacheHeaders }));
 
 function createAdminSessionToken() {
   const issuedAt = Date.now().toString();
