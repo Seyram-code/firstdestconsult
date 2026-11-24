@@ -102,9 +102,44 @@ function normalizeOfferPrograms(type, rawPrograms) {
   return { programs, error: null };
 }
 
+function normalizeApplicantPrograms(availablePrograms, rawSelections, requiresSelection = true) {
+  let selections = rawSelections;
+  if (typeof selections === 'string') {
+    try {
+      selections = JSON.parse(selections);
+    } catch {
+      return { programs: [], error: 'Program selections must be a valid list.' };
+    }
+  }
+  if (selections === undefined || selections === null || selections === '') selections = [];
+  if (!Array.isArray(selections) || selections.some((selection) => typeof selection !== 'string')) {
+    return { programs: [], error: 'Program selections must be a valid list.' };
+  }
+  if (selections.length > 2) {
+    return { programs: [], error: 'Choose no more than 2 programs.' };
+  }
+
+  const uniqueSelections = new Set(selections);
+  if (uniqueSelections.size !== selections.length) {
+    return { programs: [], error: 'Choose each program only once.' };
+  }
+  const programs = selections.map((name) =>
+    availablePrograms.find((program) => program.name === name),
+  );
+  if (programs.some((program) => !program)) {
+    return { programs: [], error: 'Choose only programs listed for this study offer.' };
+  }
+  if (requiresSelection && programs.length === 0) {
+    return { programs: [], error: 'Choose at least one program.' };
+  }
+
+  return { programs, error: null };
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { normalizeOfferPrograms, programCatalog };
+  module.exports = { normalizeApplicantPrograms, normalizeOfferPrograms, programCatalog };
 }
 if (typeof window !== 'undefined') {
   window.FDT_PROGRAM_CATALOG = programCatalog;
+  window.FDT_NORMALIZE_APPLICANT_PROGRAMS = normalizeApplicantPrograms;
 }

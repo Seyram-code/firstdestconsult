@@ -22,7 +22,7 @@ const {
   resetAdminAccessCode,
 } = require('./adminConfig');
 const { createAdminNotifier, createApplicantNotifier } = require('./adminNotifications');
-const { normalizeOfferPrograms } = require('./programCatalog');
+const { normalizeApplicantPrograms, normalizeOfferPrograms } = require('./programCatalog');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -532,17 +532,22 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
     const phone = String(req.body.phone || '').trim();
     const email = String(req.body.email || '').trim();
     const message = String(req.body.message || '').trim();
-    const selectedProgramName = String(req.body.studyProgram || '').trim();
     const availablePrograms = Array.isArray(offer.studyPrograms) ? offer.studyPrograms : [];
-    const studyProgram = availablePrograms.find((program) => program.name === selectedProgramName) || null;
     const requiresProgramSelection = offer.type === 'Study Visa' && availablePrograms.length > 0;
-    const invalidProgram = requiresProgramSelection ? !studyProgram : Boolean(selectedProgramName);
+    const submittedPrograms = req.body.studyPrograms !== undefined
+      ? req.body.studyPrograms
+      : req.body.studyProgram ? [req.body.studyProgram] : [];
+    const { programs: selectedPrograms, error: programError } = normalizeApplicantPrograms(
+      availablePrograms,
+      submittedPrograms,
+      requiresProgramSelection,
+    );
     const missingDocuments = requiredDocuments.filter((_document, index) => !req.files?.[`document_${index}`]?.length);
     const unexpectedDocuments = Object.keys(req.files || {}).some((field) =>
       field.startsWith('document_') && Number(field.slice('document_'.length)) >= requiredDocuments.length
     );
 
-    if (!name || !phone || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || missingDocuments.length || unexpectedDocuments || invalidProgram) {
+    if (!name || !phone || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || missingDocuments.length || unexpectedDocuments || programError) {
       removeUploadedDocuments(uploadedFiles);
       res.status(400).json({
         success: false,
@@ -550,10 +555,8 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
           ? `Please upload all required documents: ${missingDocuments.join(', ')}.`
           : unexpectedDocuments
             ? 'Please upload only the documents requested for this opportunity.'
-            : invalidProgram
-              ? requiresProgramSelection
-                ? 'Please choose one of the programs listed for this study offer.'
-                : 'A program selection is not available for this opportunity.'
+            : programError
+              ? programError
               : 'Enter your name, phone number, and a valid email address.',
       });
       return;
@@ -587,15 +590,15 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
       phone,
       email,
       message,
-      studyProgram,
+      studyPrograms: selectedPrograms,
       documents,
     };
 
     await insertRecord('offerApplications', record);
     const notifications = await notifyAdmin('New Opportunity Application', {
       ...record,
-      studyProgram: studyProgram
-        ? `${studyProgram.name} — ${studyProgram.category} (${studyProgram.duration})`
+      studyPrograms: selectedPrograms.length
+        ? selectedPrograms.map((program) => `${program.name} — ${program.category} (${program.duration})`)
         : 'Not selected',
       documents: documents.map((document) => `${document.label}: ${document.originalName}`),
     });
@@ -607,7 +610,9 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
         Opportunity: offer.title,
         Phone: phone,
         Email: email,
-        ...(studyProgram ? { Program: `${studyProgram.name} — ${studyProgram.category} (${studyProgram.duration})` } : {}),
+        ...(selectedPrograms.length
+          ? { Programs: selectedPrograms.map((program) => `${program.name} — ${program.category} (${program.duration})`) }
+          : {}),
         Message: message || 'No message',
         Documents: documents.map((document) => `${document.label}: ${document.originalName}`),
       },

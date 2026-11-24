@@ -15,7 +15,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=course-selection" />
   </head>
   <body class="home-page">
     <header class="site-header">
@@ -255,12 +255,14 @@
               <label for="opportunityApplicantEmail">Email address</label>
               <input id="opportunityApplicantEmail" name="email" type="email" autocomplete="email" required />
             </div>
-            <div id="opportunity-study-program-field" class="form-field full-width hidden">
-              <label for="opportunityStudyProgram">Choose a program</label>
-              <select id="opportunityStudyProgram" name="studyProgram">
-                <option value="">Select a program</option>
-              </select>
-            </div>
+            <fieldset id="opportunity-study-program-field" class="opportunity-study-program-field full-width hidden">
+              <legend>Choose your program(s)</legend>
+              <p class="opportunity-study-program-help">Choose up to 2 programs that interest you.</p>
+              <input id="opportunityStudyPrograms" type="hidden" name="studyPrograms" value="[]" />
+              <p id="opportunity-study-program-count" class="opportunity-study-program-count" aria-live="polite">0 of 2 programs selected</p>
+              <div id="opportunity-study-program-options" class="opportunity-study-program-options"></div>
+              <p id="opportunity-study-program-status" class="opportunity-study-program-status" aria-live="polite"></p>
+            </fieldset>
             <div class="form-field full-width">
               <label for="opportunityApplicantMessage">Message (optional)</label>
               <textarea id="opportunityApplicantMessage" name="message" rows="4" placeholder="Tell us briefly why you are interested"></textarea>
@@ -361,7 +363,7 @@
       </div>
     </footer>
 
-    <script src="programCatalog.js"></script>
-    <script src="script.js"></script>
+    <script src="programCatalog.js?v=course-selection"></script>
+    <script src="script.js?v=course-selection"></script>
   </body>
 </html>

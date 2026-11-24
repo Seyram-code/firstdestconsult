@@ -74,6 +74,6 @@ still attach optional supporting documents in the application form.
 For study offers, admins select one or more programs across the Skilled Trade &
 Construction, Healthcare & Caregiving, Hospitality, Tourism & Culinary,
 Business, Admin & IT, Beauty, Fashion & Creative, and Transport & Logistics
-catalogs. Applicants choose one of the programs listed for that offer; the
-selected program is included in the admin application record and the applicant's
-confirmation email.
+catalogs. Applicants see the offered categories and courses as checkboxes and
+can select up to two programs. Their choices are included in the admin
+application record and the applicant's confirmation email.

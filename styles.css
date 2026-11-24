@@ -3272,18 +3272,100 @@ body.admin-requests-open {
   accent-color: var(--primary-2);
 }
 
-.featured-offer-programs {
-  margin: 12px 0 0;
-  color: var(--primary-2);
-  font-size: 0.9rem;
+.opportunity-study-program-field {
+  min-width: 0;
+  margin: 0 0 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f8fafc;
 }
 
-.opportunity-application-form #opportunity-study-program-field select {
-  width: 100%;
+.opportunity-study-program-field legend {
+  padding: 0 6px;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.opportunity-study-program-help {
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+
+.opportunity-study-program-count {
+  margin: 0 0 14px;
+  color: var(--primary-2);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.opportunity-study-program-options {
+  display: grid;
+  gap: 16px;
+}
+
+.opportunity-study-program-category h4 {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-size: 0.94rem;
+}
+
+.opportunity-study-program-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.opportunity-study-program-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(16, 43, 70, 0.1);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.opportunity-study-program-option:has(input:checked) {
+  border-color: var(--primary-2);
+  background: #eff6f6;
+}
+
+.opportunity-study-program-option input {
+  margin: 0;
+  accent-color: var(--primary-2);
+}
+
+.opportunity-study-program-name {
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.opportunity-study-program-duration {
+  color: var(--muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.opportunity-study-program-status {
+  min-height: 1.4em;
+  margin: 8px 0 0;
+  color: #b43131;
+  font-size: 0.84rem;
+  font-weight: 700;
 }
 
 @media (max-width: 720px) {
   .study-program-category-options {
+    grid-template-columns: 1fr;
+  }
+
+  .opportunity-study-program-list {
     grid-template-columns: 1fr;
   }
 }

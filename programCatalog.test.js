@@ -1,6 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeOfferPrograms, programCatalog } = require('./programCatalog');
+const {
+  normalizeApplicantPrograms,
+  normalizeOfferPrograms,
+  programCatalog,
+} = require('./programCatalog');
 
 const firstProgram = programCatalog[0].programs[0];
 
@@ -62,4 +66,37 @@ test('includes the additional course categories and their listed durations', () 
   assert.equal(programCatalog.length, 6);
   assert.equal(actualPrograms.length, 29);
   for (const program of expectedPrograms) assert.ok(actualPrograms.some((item) => item.every((value, index) => value === program[index])));
+});
+
+test('accepts one or two programs selected from the programs on an offer', () => {
+  const offeredPrograms = [
+    { ...programCatalog[0].programs[0], category: programCatalog[0].category },
+    { ...programCatalog[1].programs[0], category: programCatalog[1].category },
+  ];
+  const result = normalizeApplicantPrograms(
+    offeredPrograms,
+    JSON.stringify(offeredPrograms.map((program) => program.name)),
+  );
+
+  assert.equal(result.error, null);
+  assert.deepEqual(result.programs, offeredPrograms);
+});
+
+test('requires a study applicant to choose at least one program', () => {
+  const result = normalizeApplicantPrograms([firstProgram], '[]');
+
+  assert.deepEqual(result.programs, []);
+  assert.match(result.error, /Choose at least one program/);
+});
+
+test('rejects more than two, duplicate, or unlisted applicant programs', () => {
+  const offeredPrograms = programCatalog.slice(0, 3).map(({ category, programs }) => ({
+    ...programs[0],
+    category,
+  }));
+  const names = offeredPrograms.map((program) => program.name);
+
+  assert.match(normalizeApplicantPrograms(offeredPrograms, names).error, /no more than 2/);
+  assert.match(normalizeApplicantPrograms(offeredPrograms, [names[0], names[0]]).error, /only once/);
+  assert.match(normalizeApplicantPrograms(offeredPrograms, ['Not offered']).error, /listed for this study offer/);
 });
