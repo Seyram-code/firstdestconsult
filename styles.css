@@ -1597,10 +1597,6 @@ body.admin-requests-open {
   font-weight: 800;
 }
 
-.offer-other-documents {
-  margin: 16px 0 8px;
-}
-
 .offer-document-picker small {
   display: block;
 }
@@ -2875,5 +2871,419 @@ body.admin-requests-open {
   .home-page *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+.admin-page {
+  min-height: 100vh;
+  background: #f3f4f0;
+}
+
+.admin-page .site-header {
+  box-shadow: 0 4px 18px rgba(16, 43, 70, 0.045);
+}
+
+.admin-page .navbar {
+  width: min(1480px, calc(100% - 32px));
+}
+
+.admin-page .container {
+  width: min(1480px, calc(100% - 32px));
+}
+
+.admin-page .admin-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 48px 0;
+  background:
+    radial-gradient(circle at 88% 20%, rgba(215, 163, 72, 0.2), transparent 25%),
+    linear-gradient(118deg, #102b46 0%, #19495a 100%);
+}
+
+.admin-page .admin-hero::after {
+  position: absolute;
+  right: -120px;
+  bottom: -340px;
+  width: 580px;
+  height: 580px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.admin-page .admin-hero-inner {
+  position: relative;
+  z-index: 1;
+  align-items: center;
+  min-height: 190px;
+}
+
+.admin-page .admin-hero .eyebrow {
+  margin-bottom: 12px;
+  color: #f0c77c;
+}
+
+.admin-page .admin-hero h1 {
+  max-width: 760px;
+  margin-bottom: 10px;
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: -0.055em;
+}
+
+.admin-page .admin-hero p:not(.eyebrow) {
+  max-width: 640px;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.admin-page .admin-hero .secondary-btn {
+  flex: 0 0 auto;
+  min-height: 46px;
+  padding: 0.8rem 1.15rem;
+  border-color: rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.admin-page .page-section {
+  padding: 34px 0 88px;
+}
+
+.admin-page .admin-shell {
+  width: min(1480px, calc(100% - 32px));
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.admin-page .login-panel {
+  width: min(100%, 520px);
+  margin: 20px auto 30px;
+  padding: clamp(26px, 5vw, 42px);
+  border: 1px solid rgba(16, 43, 70, 0.08);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 22px 60px rgba(16, 43, 70, 0.09);
+}
+
+.admin-page .login-panel-header h2 {
+  margin: 12px 0 0;
+  color: var(--primary);
+  font-size: 1.8rem;
+  letter-spacing: -0.04em;
+}
+
+.admin-page .login-badge {
+  background: rgba(39, 97, 118, 0.09);
+  color: var(--primary-2);
+}
+
+.admin-page .admin-login-form .primary-btn,
+.admin-page .job-offer-form > .primary-btn,
+.admin-page #admin-reset-form > .primary-btn {
+  min-height: 48px;
+  padding: 0.8rem 1.2rem;
+  border: 0;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  box-shadow: none;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.admin-page .admin-content {
+  padding: clamp(18px, 2vw, 26px);
+  border: 1px solid rgba(16, 43, 70, 0.08);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 20px 55px rgba(16, 43, 70, 0.07);
+}
+
+.admin-page .dashboard-header {
+  display: block;
+  margin: 0 0 20px;
+  padding: 2px 2px 20px;
+  border-bottom: 1px solid rgba(16, 43, 70, 0.1);
+}
+
+.admin-page .dashboard-heading {
+  margin-bottom: 16px;
+}
+
+.admin-page .dashboard-heading .eyebrow {
+  margin-bottom: 5px;
+  color: var(--primary-2);
+  font-size: 0.68rem;
+}
+
+.admin-page .dashboard-header h2 {
+  color: var(--primary);
+  font-size: clamp(1.7rem, 3vw, 2.2rem);
+  letter-spacing: -0.045em;
+}
+
+.admin-page .dashboard-heading > p:last-child {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.admin-page .dashboard-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  gap: 9px;
+}
+
+.admin-page .dashboard-actions .primary-btn,
+.admin-page .dashboard-actions .secondary-btn {
+  justify-content: flex-start;
+  min-height: 48px;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(16, 43, 70, 0.1);
+  border-radius: 12px;
+  background: #f7f8f6;
+  color: var(--primary);
+  box-shadow: none;
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-page .dashboard-actions .primary-btn:hover,
+.admin-page .dashboard-actions .primary-btn:focus-visible {
+  border-color: rgba(39, 97, 118, 0.32);
+  background: #eef4f3;
+}
+
+.admin-page .dashboard-actions #admin-logout {
+  justify-content: center;
+  border-color: rgba(177, 69, 57, 0.18);
+  background: #fff7f5;
+  color: #a63e33;
+}
+
+.admin-page .admin-grid {
+  grid-template-columns: minmax(240px, 0.68fr) minmax(0, 1.32fr);
+  align-items: start;
+  gap: 18px;
+  margin-bottom: 0;
+}
+
+.admin-page .admin-grid > .panel {
+  min-width: 0;
+  padding: clamp(20px, 3vw, 28px);
+  border: 1px solid rgba(16, 43, 70, 0.09);
+  border-radius: 17px;
+  background: #fbfcfa;
+}
+
+.admin-page .admin-grid > .panel:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
+.admin-page .admin-grid > .panel h3 {
+  margin: 0 0 20px;
+  color: var(--primary);
+  font-size: 1.12rem;
+  letter-spacing: -0.025em;
+}
+
+.admin-page .admin-grid .form-field label {
+  color: #344b5a;
+  font-size: 0.82rem;
+}
+
+.admin-page .admin-grid .form-field input,
+.admin-page .admin-grid .form-field select,
+.admin-page .admin-grid .form-field textarea {
+  border-color: rgba(16, 43, 70, 0.14);
+  border-radius: 10px;
+  background-color: #fff;
+}
+
+.admin-page .offer-document-picker {
+  border-color: rgba(16, 43, 70, 0.12);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.admin-page .admin-requests-dialog {
+  border-radius: 18px;
+}
+
+.admin-page .admin-requests-header {
+  background: #fbfcfa;
+}
+
+.admin-page .admin-requests-header h2 {
+  color: var(--primary);
+}
+
+@media (max-width: 800px) {
+  .admin-page .admin-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-page .admin-grid > .panel:nth-child(3) {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-page .navbar {
+    width: min(100% - 32px, 1480px);
+  }
+
+  .admin-page .admin-hero {
+    padding: 38px 0;
+  }
+
+  .admin-page .admin-hero-inner {
+    align-items: flex-start;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .admin-page .admin-hero .secondary-btn {
+    width: auto;
+  }
+
+  .admin-page .admin-shell {
+    width: min(100% - 32px, 1480px);
+  }
+
+  .admin-page .admin-content {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .admin-page .dashboard-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-page .admin-grid > .panel {
+    padding: 20px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-page *,
+  .admin-page *::before,
+  .admin-page *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.study-program-picker {
+  min-width: 0;
+  margin: 0 0 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.study-program-picker legend {
+  padding: 0 6px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.study-program-picker > p {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.study-program-count {
+  color: var(--primary-2) !important;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.study-program-options {
+  display: grid;
+  gap: 16px;
+}
+
+.study-program-category-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.study-program-category-heading h4 {
+  margin: 0;
+  color: var(--primary);
+  font-size: 0.92rem;
+}
+
+.study-program-category-select {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  color: var(--primary-2);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.study-program-category-select input {
+  margin: 0;
+  accent-color: var(--primary-2);
+}
+
+.study-program-category-select input:disabled {
+  cursor: not-allowed;
+}
+
+.study-program-category-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.study-program-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(16, 43, 70, 0.1);
+  border-radius: 10px;
+  background: #fbfcfa;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.study-program-option input {
+  flex: 0 0 auto;
+  margin: 3px 0 0;
+  accent-color: var(--primary-2);
+}
+
+.featured-offer-programs {
+  margin: 12px 0 0;
+  color: var(--primary-2);
+  font-size: 0.9rem;
+}
+
+.opportunity-application-form #opportunity-study-program-field select {
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .study-program-category-options {
+    grid-template-columns: 1fr;
   }
 }

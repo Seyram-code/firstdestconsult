@@ -70,3 +70,10 @@ as PDF, Word, JPG, or PNG (8 MB max per file). Applications appear under
 downloaded after admin login. Uploaded documents are kept outside the public
 uploads directory. If an opportunity has no required documents, applicants can
 still attach optional supporting documents in the application form.
+
+For study offers, admins select one or more programs across the Skilled Trade &
+Construction, Healthcare & Caregiving, Hospitality, Tourism & Culinary,
+Business, Admin & IT, Beauty, Fashion & Creative, and Transport & Logistics
+catalogs. Applicants choose one of the programs listed for that offer; the
+selected program is included in the admin application record and the applicant's
+confirmation email.

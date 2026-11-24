@@ -22,6 +22,7 @@ const {
   resetAdminAccessCode,
 } = require('./adminConfig');
 const { createAdminNotifier, createApplicantNotifier } = require('./adminNotifications');
+const { normalizeOfferPrograms } = require('./programCatalog');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -72,7 +73,7 @@ const applicationUpload = multer({
       cb(null, `${crypto.randomUUID()}${path.extname(file.originalname).toLowerCase()}`);
     },
   }),
-  limits: { fileSize: 8 * 1024 * 1024, files: 8, fields: 5, fieldSize: 16 * 1024 },
+  limits: { fileSize: 8 * 1024 * 1024, files: 8, fields: 6, fieldSize: 16 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowedTypes = new Map([
       ['.pdf', ['application/pdf']],
@@ -424,6 +425,11 @@ app.post('/api/offers', upload.single('image'), async (req, res) => {
       res.status(400).json({ success: false, message: 'Add up to 8 valid required document names.' });
       return;
     }
+    const { programs, error: programsError } = normalizeOfferPrograms(payload.type || '', payload.studyPrograms);
+    if (programsError) {
+      res.status(400).json({ success: false, message: programsError });
+      return;
+    }
 
     await insertRecord('offers', {
       id: Date.now(),
@@ -433,12 +439,13 @@ app.post('/api/offers', upload.single('image'), async (req, res) => {
       location: payload.location || '',
       type: payload.type || '',
       description: payload.description || '',
+      studyPrograms: programs,
       requiredDocuments: requiredDocuments.map((document) => document.trim()),
       link: payload.link || '',
       image: imagePath,
     });
 
-    res.status(200).json({ success: true, message: 'Offer published', image: imagePath, requiredDocuments });
+    res.status(200).json({ success: true, message: 'Offer published', image: imagePath, requiredDocuments, studyPrograms: programs });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error publishing offer' });
@@ -470,6 +477,18 @@ app.put('/api/offers/:id', upload.single('image'), async (req, res) => {
       return;
     }
 
+    const type = payload.type || existingOffer.type || '';
+    const submittedPrograms = payload.studyPrograms !== undefined
+      ? payload.studyPrograms
+      : type === existingOffer.type
+        ? existingOffer.studyPrograms || []
+        : [];
+    const { programs, error: programsError } = normalizeOfferPrograms(type, submittedPrograms);
+    if (programsError) {
+      res.status(400).json({ success: false, message: programsError });
+      return;
+    }
+
     const file = req.file;
     const imagePath = file ? `/uploads/offers/${file.filename}` : existingOffer.image || '';
     const updatedOffer = {
@@ -477,8 +496,9 @@ app.put('/api/offers/:id', upload.single('image'), async (req, res) => {
       id: existingOffer.id,
       title: payload.title || existingOffer.title || '',
       location: payload.location || existingOffer.location || '',
-      type: payload.type || existingOffer.type || '',
+      type,
       description: payload.description || existingOffer.description || '',
+      studyPrograms: programs,
       requiredDocuments: requiredDocuments.map((document) => document.trim()),
       image: imagePath,
     };
@@ -489,6 +509,7 @@ app.put('/api/offers/:id', upload.single('image'), async (req, res) => {
       message: 'Offer updated',
       image: imagePath,
       requiredDocuments: updatedOffer.requiredDocuments,
+      studyPrograms: updatedOffer.studyPrograms,
     });
   } catch (error) {
     console.error(error);
@@ -511,12 +532,17 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
     const phone = String(req.body.phone || '').trim();
     const email = String(req.body.email || '').trim();
     const message = String(req.body.message || '').trim();
+    const selectedProgramName = String(req.body.studyProgram || '').trim();
+    const availablePrograms = Array.isArray(offer.studyPrograms) ? offer.studyPrograms : [];
+    const studyProgram = availablePrograms.find((program) => program.name === selectedProgramName) || null;
+    const requiresProgramSelection = offer.type === 'Study Visa' && availablePrograms.length > 0;
+    const invalidProgram = requiresProgramSelection ? !studyProgram : Boolean(selectedProgramName);
     const missingDocuments = requiredDocuments.filter((_document, index) => !req.files?.[`document_${index}`]?.length);
     const unexpectedDocuments = Object.keys(req.files || {}).some((field) =>
       field.startsWith('document_') && Number(field.slice('document_'.length)) >= requiredDocuments.length
     );
 
-    if (!name || !phone || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || missingDocuments.length || unexpectedDocuments) {
+    if (!name || !phone || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || missingDocuments.length || unexpectedDocuments || invalidProgram) {
       removeUploadedDocuments(uploadedFiles);
       res.status(400).json({
         success: false,
@@ -524,7 +550,11 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
           ? `Please upload all required documents: ${missingDocuments.join(', ')}.`
           : unexpectedDocuments
             ? 'Please upload only the documents requested for this opportunity.'
-          : 'Enter your name, phone number, and a valid email address.',
+            : invalidProgram
+              ? requiresProgramSelection
+                ? 'Please choose one of the programs listed for this study offer.'
+                : 'A program selection is not available for this opportunity.'
+              : 'Enter your name, phone number, and a valid email address.',
       });
       return;
     }
@@ -557,12 +587,16 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
       phone,
       email,
       message,
+      studyProgram,
       documents,
     };
 
     await insertRecord('offerApplications', record);
     const notifications = await notifyAdmin('New Opportunity Application', {
       ...record,
+      studyProgram: studyProgram
+        ? `${studyProgram.name} — ${studyProgram.category} (${studyProgram.duration})`
+        : 'Not selected',
       documents: documents.map((document) => `${document.label}: ${document.originalName}`),
     });
     const applicantConfirmation = await notifyApplicant(
@@ -573,6 +607,7 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
         Opportunity: offer.title,
         Phone: phone,
         Email: email,
+        ...(studyProgram ? { Program: `${studyProgram.name} — ${studyProgram.category} (${studyProgram.duration})` } : {}),
         Message: message || 'No message',
         Documents: documents.map((document) => `${document.label}: ${document.originalName}`),
       },

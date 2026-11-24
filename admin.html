@@ -17,7 +17,7 @@
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body class="admin-page">
     <header class="site-header">
       <nav class="navbar container" aria-label="Main navigation">
         <a href="index.html" class="brand-wrap" aria-label="Home page">
@@ -40,8 +40,8 @@
     </header>
 
     <main class="portal-main">
-      <section class="page-hero page-hero-small">
-        <div class="container page-hero-inner">
+      <section class="page-hero page-hero-small admin-hero">
+        <div class="container page-hero-inner admin-hero-inner">
           <div>
             <p class="eyebrow dark">Admin Portal</p>
             <h1>Manage applications and job offers</h1>
@@ -85,7 +85,11 @@
 
           <div id="admin-content" class="admin-content hidden">
             <div class="dashboard-header">
-              <h2>Admin Dashboard</h2>
+              <div class="dashboard-heading">
+                <p class="eyebrow dark">Workspace</p>
+                <h2>Admin Dashboard</h2>
+                <p>Review incoming requests or manage the opportunities shown to applicants.</p>
+              </div>
               <div class="dashboard-actions">
                 <button type="button" id="view-submitted-applications" class="primary-btn">Travel Applications</button>
                 <button type="button" id="view-document-help-requests" class="primary-btn">Document Assistance Requests</button>
@@ -171,10 +175,13 @@
                     </select>
                   </div>
 
-                  <div class="form-field">
-                    <label for="offerDescription">Description</label>
-                    <textarea id="offerDescription" rows="5" placeholder="Describe the visa opportunity" required></textarea>
-                  </div>
+                  <fieldset id="study-program-picker" class="study-program-picker hidden">
+                    <legend>Programs &amp; courses</legend>
+                    <p>Select the programs applicants can choose from for this study offer.</p>
+                    <input type="hidden" id="offerStudyPrograms" name="studyPrograms" value="[]" />
+                    <p id="study-program-count" class="study-program-count">0 programs selected</p>
+                    <div id="study-program-options" class="study-program-options"></div>
+                  </fieldset>
 
                   <fieldset class="offer-document-picker">
                     <legend>Required documents</legend>
@@ -192,12 +199,14 @@
                       <label class="checkbox-item"><input type="checkbox" name="offerDocument" value="Business certificate" /><span>Business certificate</span></label>
                       <label class="checkbox-item"><input type="checkbox" name="offerDocument" value="Other documents" /><span>Other documents</span></label>
                     </div>
-                    <div class="form-field offer-other-documents">
-                      <label for="offerOtherDocuments">Other documents</label>
-                      <textarea id="offerOtherDocuments" rows="3" placeholder="Add one other document per line"></textarea>
-                    </div>
+                    <textarea id="offerOtherDocuments" hidden aria-hidden="true" tabindex="-1"></textarea>
                     <small>Applicants will upload each selected document as PDF, Word, JPG or PNG (up to 8 MB each).</small>
                   </fieldset>
+
+                  <div class="form-field">
+                    <label for="offerDescription">Description</label>
+                    <textarea id="offerDescription" rows="5" placeholder="Describe the visa opportunity" required></textarea>
+                  </div>
 
                   <div class="form-field">
                     <label for="offerImage">Image Upload</label>
@@ -274,6 +283,7 @@
       </div>
     </footer>
 
+    <script src="programCatalog.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

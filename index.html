@@ -255,6 +255,12 @@
               <label for="opportunityApplicantEmail">Email address</label>
               <input id="opportunityApplicantEmail" name="email" type="email" autocomplete="email" required />
             </div>
+            <div id="opportunity-study-program-field" class="form-field full-width hidden">
+              <label for="opportunityStudyProgram">Choose a program</label>
+              <select id="opportunityStudyProgram" name="studyProgram">
+                <option value="">Select a program</option>
+              </select>
+            </div>
             <div class="form-field full-width">
               <label for="opportunityApplicantMessage">Message (optional)</label>
               <textarea id="opportunityApplicantMessage" name="message" rows="4" placeholder="Tell us briefly why you are interested"></textarea>
@@ -355,6 +361,7 @@
       </div>
     </footer>
 
+    <script src="programCatalog.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

@@ -185,7 +185,7 @@ function initializeModernSelects() {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['disabled', 'selected', 'value'],
+      attributeFilter: ['disabled', 'required', 'selected', 'value'],
     });
     syncSelect(select);
   });
@@ -767,6 +767,99 @@ let editingOfferId = null;
 if (jobOfferForm) {
   const offerRequiredDocumentsInput = document.getElementById('offerRequiredDocuments');
   const offerRequiredDocumentCount = document.getElementById('offer-required-document-count');
+  const studyProgramPicker = document.getElementById('study-program-picker');
+  const studyProgramsInput = document.getElementById('offerStudyPrograms');
+  const studyProgramCount = document.getElementById('study-program-count');
+  const studyProgramOptions = document.getElementById('study-program-options');
+  const studyCatalog = window.FDT_PROGRAM_CATALOG || [];
+
+  if (studyProgramOptions) {
+    studyCatalog.forEach(({ category, programs }, categoryIndex) => {
+      const group = document.createElement('section');
+      group.className = 'study-program-category';
+      const headingRow = document.createElement('div');
+      headingRow.className = 'study-program-category-heading';
+      const heading = document.createElement('h4');
+      heading.textContent = category;
+      const categoryLabel = document.createElement('label');
+      categoryLabel.className = 'study-program-category-select';
+      const categoryCheckbox = document.createElement('input');
+      categoryCheckbox.type = 'checkbox';
+      categoryCheckbox.name = 'studyProgramCategory';
+      categoryCheckbox.value = category;
+      categoryCheckbox.setAttribute('aria-label', `Select all ${category} programs`);
+      categoryCheckbox.setAttribute('aria-controls', `study-program-category-${categoryIndex}`);
+      const categoryLabelText = document.createElement('span');
+      categoryLabelText.textContent = 'Select all';
+      categoryLabel.append(categoryCheckbox, categoryLabelText);
+      headingRow.append(heading, categoryLabel);
+      const options = document.createElement('div');
+      options.className = 'study-program-category-options';
+      options.id = `study-program-category-${categoryIndex}`;
+      programs.forEach(({ name, duration }) => {
+        const label = document.createElement('label');
+        label.className = 'study-program-option';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = 'studyProgramOption';
+        checkbox.value = name;
+        const text = document.createElement('span');
+        text.textContent = `${name} (${duration})`;
+        label.append(checkbox, text);
+        options.append(label);
+      });
+      group.append(headingRow, options);
+      studyProgramOptions.append(group);
+    });
+  }
+
+  function syncStudyProgramCategoryCheckboxes() {
+    studyProgramOptions?.querySelectorAll('input[name="studyProgramCategory"]').forEach((categoryCheckbox) => {
+      const options = categoryCheckbox.closest('.study-program-category')
+        ?.querySelectorAll('input[name="studyProgramOption"]');
+      const selectedCount = Array.from(options || []).filter((input) => input.checked).length;
+      categoryCheckbox.checked = Boolean(options?.length) && selectedCount === options.length;
+      categoryCheckbox.indeterminate = selectedCount > 0 && selectedCount < (options?.length || 0);
+      categoryCheckbox.disabled = document.getElementById('offerType').value !== 'Study Visa';
+    });
+  }
+
+  function collectStudyPrograms() {
+    const selectedPrograms = Array.from(jobOfferForm.querySelectorAll('input[name="studyProgramOption"]:checked'))
+      .map((input) => input.value);
+    if (studyProgramsInput) studyProgramsInput.value = JSON.stringify(selectedPrograms);
+    if (studyProgramCount) {
+      studyProgramCount.textContent = `${selectedPrograms.length} ${selectedPrograms.length === 1 ? 'program' : 'programs'} selected`;
+    }
+    syncStudyProgramCategoryCheckboxes();
+    return selectedPrograms;
+  }
+
+  studyProgramOptions?.addEventListener('change', (event) => {
+    const categoryCheckbox = event.target.closest('input[name="studyProgramCategory"]');
+    if (categoryCheckbox) {
+      const programCheckboxes = categoryCheckbox.closest('.study-program-category')
+        .querySelectorAll('input[name="studyProgramOption"]');
+      programCheckboxes.forEach((checkbox) => {
+        checkbox.checked = categoryCheckbox.checked;
+      });
+    }
+    collectStudyPrograms();
+  });
+
+  function syncStudyProgramPicker() {
+    const isStudyOffer = document.getElementById('offerType').value === 'Study Visa';
+    studyProgramPicker?.classList.toggle('hidden', !isStudyOffer);
+    jobOfferForm.querySelectorAll('input[name="studyProgramOption"]').forEach((input) => {
+      input.disabled = !isStudyOffer;
+      if (!isStudyOffer) input.checked = false;
+    });
+    syncStudyProgramCategoryCheckboxes();
+    collectStudyPrograms();
+  }
+
+  document.getElementById('offerType')?.addEventListener('change', syncStudyProgramPicker);
+  syncStudyProgramPicker();
 
   function collectOfferRequiredDocuments() {
     const selectedDocuments = Array.from(jobOfferForm.querySelectorAll('input[name="offerDocument"]:checked'))
@@ -799,6 +892,7 @@ if (jobOfferForm) {
     const location = document.getElementById('offerLocation').value.trim();
     const type = document.getElementById('offerType').value.trim();
     const description = document.getElementById('offerDescription').value.trim();
+    const studyPrograms = collectStudyPrograms();
     let requiredDocuments = collectOfferRequiredDocuments();
     if (offerRequiredDocumentsInput?.value) {
       try {
@@ -815,10 +909,13 @@ if (jobOfferForm) {
     }
     const imageInput = document.getElementById('offerImage');
 
-    if (!title || !location || !type || !description || requiredDocuments.length > 8) {
+    if (!title || !location || !type || !description || requiredDocuments.length > 8 ||
+        (type === 'Study Visa' && !studyPrograms.length)) {
       offerStatus.textContent = requiredDocuments.length > 8
         ? 'List no more than 8 required documents.'
-        : 'Please complete all required fields to publish an offer.';
+        : type === 'Study Visa' && !studyPrograms.length
+          ? 'Select at least one program for this study offer.'
+          : 'Please complete all required fields to publish an offer.';
       offerStatus.style.color = '#c03333';
       return;
     }
@@ -830,6 +927,7 @@ if (jobOfferForm) {
       formData.append('location', location);
       formData.append('type', type);
       formData.append('description', description);
+      formData.append('studyPrograms', JSON.stringify(studyPrograms));
       formData.append('requiredDocuments', JSON.stringify(requiredDocuments));
       formData.append('link', '');
 
@@ -853,6 +951,7 @@ if (jobOfferForm) {
       showToast(editingOfferId ? 'Offer updated successfully.' : 'Offer published successfully.');
       jobOfferForm.reset();
       editingOfferId = null;
+      syncStudyProgramPicker();
       const publishButton = jobOfferForm.querySelector('button[type="submit"]');
       if (publishButton) publishButton.textContent = 'Publish Offer';
       window.setTimeout(collectOfferRequiredDocuments);
@@ -1606,6 +1705,10 @@ function renderAdminOfferCards(offers) {
         ? `<img src="${escapeHtml(offer.image)}" alt="${escapeHtml(offer.title)}" class="offer-image" />`
         : '';
       const requiredDocuments = Array.isArray(offer.requiredDocuments) ? offer.requiredDocuments : [];
+      const studyPrograms = Array.isArray(offer.studyPrograms) ? offer.studyPrograms : [];
+      const programSummary = studyPrograms.length
+        ? `<p><strong>Programs:</strong> ${escapeHtml(studyPrograms.map((program) => `${program.name} (${program.duration})`).join(', '))}</p>`
+        : '';
 
       return `
         <article class="list-item">
@@ -1616,9 +1719,10 @@ function renderAdminOfferCards(offers) {
           <p>${escapeHtml(offer.location)}</p>
           ${imageMarkup}
           <p>${escapeHtml(offer.description)}</p>
+          ${programSummary}
           <p><strong>Required documents:</strong> ${escapeHtml(requiredDocuments.join(', ') || 'None specified')}</p>
           <div class="list-item-actions">
-            <button type="button" class="edit-offer-btn" data-edit-offer="${escapeHtml(String(offer.id || ''))}">Edit Documents</button>
+            <button type="button" class="edit-offer-btn" data-edit-offer="${escapeHtml(String(offer.id || ''))}">Edit Offer</button>
             <button type="button" class="delete-item-btn" data-delete-type="offer" data-id="${escapeHtml(String(offer.id || ''))}">Delete</button>
           </div>
         </article>
@@ -1650,9 +1754,13 @@ function renderHomeOfferCards(offers) {
       const location = offer.location || 'Worldwide';
       const typeLabel = offer.type || 'Featured Event';
       const requiredDocuments = Array.isArray(offer.requiredDocuments) ? offer.requiredDocuments : [];
+      const studyPrograms = Array.isArray(offer.studyPrograms) ? offer.studyPrograms : [];
       const documentSummary = requiredDocuments.length
         ? `<p class="featured-offer-documents">Upload ${requiredDocuments.length} required ${requiredDocuments.length === 1 ? 'document' : 'documents'}: ${escapeHtml(requiredDocuments.join(', '))}</p>`
         : '<p class="featured-offer-documents">No documents are required for this opportunity.</p>';
+      const programSummary = studyPrograms.length
+        ? `<p class="featured-offer-programs"><strong>Programs:</strong> ${escapeHtml(studyPrograms.map((program) => `${program.name} (${program.duration})`).join(', '))}</p>`
+        : '';
 
       return `
         <article class="featured-offer-card" data-offer-id="${escapeHtml(String(offer.id || ''))}">
@@ -1673,6 +1781,7 @@ function renderHomeOfferCards(offers) {
             <div class="featured-offer-meta">
               <span>${escapeHtml(typeLabel)}</span>
             </div>
+            ${programSummary}
             ${documentSummary}
             <button type="button" class="primary-btn opportunity-apply-btn" data-offer-id="${escapeHtml(String(offer.id || ''))}">Open Application &amp; Upload Documents</button>
           </div>
@@ -1712,6 +1821,7 @@ async function renderOfferApplications() {
         <div class="application-fields">
           <div class="application-field"><span>Phone</span><strong>${escapeHtml(application.phone || 'Not provided')}</strong></div>
           <div class="application-field"><span>Email</span><strong>${escapeHtml(application.email || 'Not provided')}</strong></div>
+          ${application.studyProgram ? `<div class="application-field full-width"><span>Selected program</span><strong>${escapeHtml(`${application.studyProgram.name} — ${application.studyProgram.category} (${application.studyProgram.duration})`)}</strong></div>` : ''}
           <div class="application-field full-width"><span>Message</span><strong>${escapeHtml(application.message || 'No message')}</strong></div>
           <div class="application-field full-width">
             <span>Uploaded documents</span>
@@ -1742,6 +1852,22 @@ function openOpportunityApplication(offer) {
     `${offer.type || 'Opportunity'} · ${offer.location || 'Worldwide'}\n\n${offer.description || ''}`;
   opportunityApplicationForm.elements.offerId.value = String(offer.id);
   opportunityApplicationStatus.textContent = '';
+
+  const studyProgramField = document.getElementById('opportunity-study-program-field');
+  const studyProgramSelect = document.getElementById('opportunityStudyProgram');
+  const availablePrograms = Array.isArray(offer.studyPrograms) ? offer.studyPrograms : [];
+  studyProgramSelect.replaceChildren(new Option('Select a program', ''));
+  availablePrograms.forEach((program) => {
+    const option = new Option(
+      `${program.category} — ${program.name} (${program.duration})`,
+      program.name,
+    );
+    studyProgramSelect.add(option);
+  });
+  const hasStudyPrograms = offer.type === 'Study Visa' && availablePrograms.length > 0;
+  studyProgramField.classList.toggle('hidden', !hasStudyPrograms);
+  studyProgramSelect.required = hasStudyPrograms;
+  studyProgramSelect.disabled = !hasStudyPrograms;
 
   const documentContainer = document.getElementById('opportunity-required-documents');
   documentContainer.replaceChildren();
@@ -2427,8 +2553,17 @@ document.addEventListener('click', async (event) => {
     document.getElementById('offerTitle').value = offer.title || '';
     document.getElementById('offerLocation').value = offer.location || '';
     document.getElementById('offerType').value = offer.type || '';
+    document.getElementById('offerType').dispatchEvent(new Event('change', { bubbles: true }));
     document.getElementById('offerDescription').value = offer.description || '';
     document.getElementById('offerOtherDocuments').value = '';
+
+    const selectedStudyPrograms = new Set(
+      (Array.isArray(offer.studyPrograms) ? offer.studyPrograms : []).map((program) => program.name),
+    );
+    jobOfferForm.querySelectorAll('input[name="studyProgramOption"]').forEach((input) => {
+      input.checked = selectedStudyPrograms.has(input.value);
+    });
+    document.getElementById('study-program-options')?.dispatchEvent(new Event('change', { bubbles: true }));
 
     const requiredDocuments = Array.isArray(offer.requiredDocuments) ? offer.requiredDocuments : [];
     const knownDocumentValues = new Set(Array.from(jobOfferForm.querySelectorAll('input[name="offerDocument"]')).map((input) => input.value));
