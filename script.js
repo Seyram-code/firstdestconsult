@@ -1820,6 +1820,7 @@ async function renderOfferApplications() {
           <div class="application-field"><span>Phone</span><strong>${escapeHtml(application.phone || 'Not provided')}</strong></div>
           <div class="application-field"><span>Email</span><strong>${escapeHtml(application.email || 'Not provided')}</strong></div>
           ${selectedPrograms.length ? `<div class="application-field full-width"><span>Selected programs</span><strong>${escapeHtml(selectedPrograms.map((program) => `${program.name} — ${program.category} (${program.duration})`).join('; '))}</strong></div>` : ''}
+          ${application.termsAccepted ? `<div class="application-field full-width"><span>Short-course terms accepted</span><strong>${escapeHtml(application.termsAcceptedAt || 'Yes')} (${escapeHtml(application.termsVersion || 'version not recorded')})</strong></div>` : ''}
           <div class="application-field full-width"><span>Message</span><strong>${escapeHtml(application.message || 'No message')}</strong></div>
           <div class="application-field full-width">
             <span>Uploaded documents</span>
@@ -1845,6 +1846,12 @@ function openOpportunityApplication(offer) {
 
   const requiredDocuments = Array.isArray(offer.requiredDocuments) ? offer.requiredDocuments : [];
   opportunityApplicationForm.reset();
+  const shortCourseTerms = document.getElementById('short-course-terms');
+  const shortCourseTermsAccepted = document.getElementById('short-course-terms-accepted');
+  const requiresShortCourseTerms = offer.type === 'Study Visa';
+  shortCourseTerms.classList.toggle('hidden', !requiresShortCourseTerms);
+  shortCourseTermsAccepted.disabled = !requiresShortCourseTerms;
+  shortCourseTermsAccepted.required = requiresShortCourseTerms;
   document.getElementById('opportunity-dialog-title').textContent = offer.title || 'Opportunity';
   document.getElementById('opportunity-dialog-description').textContent =
     `${offer.type || 'Opportunity'} · ${offer.location || 'Worldwide'}\n\n${offer.description || ''}`;
@@ -1995,6 +2002,12 @@ if (opportunityApplicationForm) {
     if (!studyProgramField.classList.contains('hidden') && selectedPrograms.length === 0) {
       document.getElementById('opportunity-study-program-status').textContent = 'Choose at least one program.';
       document.getElementById('opportunity-study-program-options').querySelector('input')?.focus();
+      return;
+    }
+    if (!document.getElementById('short-course-terms').classList.contains('hidden') &&
+        !document.getElementById('short-course-terms-accepted').checked) {
+      opportunityApplicationStatus.textContent = 'Please read and accept the short-course terms before submitting.';
+      document.getElementById('short-course-terms-accepted').focus();
       return;
     }
 

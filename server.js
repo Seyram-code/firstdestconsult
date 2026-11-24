@@ -30,6 +30,7 @@ const {
   validateOfferImage,
 } = require('./offerImageStorage');
 
+const SHORT_COURSE_TERMS_VERSION = '2026-11-24-v1';
 const app = express();
 const PORT = process.env.PORT || 8000;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@firstdestltd.com';
@@ -559,6 +560,8 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
     const email = String(req.body.email || '').trim();
     const message = String(req.body.message || '').trim();
     const availablePrograms = Array.isArray(offer.studyPrograms) ? offer.studyPrograms : [];
+    const requiresShortCourseTerms = offer.type === 'Study Visa';
+    const acceptedShortCourseTerms = req.body.termsAccepted === 'accepted';
     const requiresProgramSelection = offer.type === 'Study Visa' && availablePrograms.length > 0;
     const submittedPrograms = req.body.studyPrograms !== undefined
       ? req.body.studyPrograms
@@ -573,7 +576,8 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
       field.startsWith('document_') && Number(field.slice('document_'.length)) >= requiredDocuments.length
     );
 
-    if (!name || !phone || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || missingDocuments.length || unexpectedDocuments || programError) {
+    if (!name || !phone || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || missingDocuments.length || unexpectedDocuments || programError ||
+        (requiresShortCourseTerms && !acceptedShortCourseTerms)) {
       removeUploadedDocuments(uploadedFiles);
       res.status(400).json({
         success: false,
@@ -583,7 +587,9 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
             ? 'Please upload only the documents requested for this opportunity.'
             : programError
               ? programError
-              : 'Enter your name, phone number, and a valid email address.',
+              : requiresShortCourseTerms && !acceptedShortCourseTerms
+                ? 'Please accept the short-course terms before submitting your application.'
+                : 'Enter your name, phone number, and a valid email address.',
       });
       return;
     }
@@ -617,6 +623,13 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
       email,
       message,
       studyPrograms: selectedPrograms,
+      ...(requiresShortCourseTerms
+        ? {
+            termsAccepted: true,
+            termsAcceptedAt: new Date().toISOString(),
+            termsVersion: SHORT_COURSE_TERMS_VERSION,
+          }
+        : {}),
       documents,
     };
 
@@ -638,6 +651,9 @@ app.post('/api/offers/:id/applications', handleOpportunityDocumentUpload, async 
         Email: email,
         ...(selectedPrograms.length
           ? { Programs: selectedPrograms.map((program) => `${program.name} — ${program.category} (${program.duration})`) }
+          : {}),
+        ...(requiresShortCourseTerms
+          ? { 'Short-course terms accepted': `Yes (${SHORT_COURSE_TERMS_VERSION})` }
           : {}),
         Message: message || 'No message',
         Documents: documents.map((document) => `${document.label}: ${document.originalName}`),

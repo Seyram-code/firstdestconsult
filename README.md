@@ -80,3 +80,6 @@ Business, Admin & IT, Beauty, Fashion & Creative, and Transport & Logistics
 catalogs. Applicants see the offered categories and courses as checkboxes and
 can select up to two programs. Their choices are included in the admin
 application record and the applicant's confirmation email.
+Study Visa applicants must review and accept the short-course payment terms
+before submitting. The acceptance timestamp and terms version are saved with
+the application and shown in the admin review.

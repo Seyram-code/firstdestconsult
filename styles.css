@@ -1504,6 +1504,72 @@ body.admin-requests-open {
   background: #f8fafc;
 }
 
+.short-course-terms {
+  margin: 22px 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.short-course-terms h3 {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-size: 1.05rem;
+}
+
+.short-course-terms-intro {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+
+.short-course-terms-details {
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.short-course-terms-details summary {
+  padding: 12px 14px;
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.short-course-terms-content {
+  padding: 0 14px 14px;
+}
+
+.short-course-terms-content h4 {
+  margin: 16px 0 6px;
+}
+
+.short-course-terms-content p,
+.short-course-terms-content ul {
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+.short-course-terms-content li + li {
+  margin-top: 8px;
+}
+
+.short-course-terms-acceptance {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.short-course-terms-acceptance input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+}
+
 .opportunity-required-documents h3 {
   margin: 0 0 8px;
   color: var(--primary);
