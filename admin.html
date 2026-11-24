@@ -93,6 +93,7 @@
                 <button type="button" id="view-work-abroad-requests" class="primary-btn">Work Abroad Requests</button>
                 <button type="button" id="view-flight-booking-requests" class="primary-btn">Flight Booking Requests</button>
                 <button type="button" id="view-hotel-booking-requests" class="primary-btn">Hotel Reservation Requests</button>
+                <button type="button" id="view-offer-applications" class="primary-btn">Opportunity Applications</button>
                 <button type="button" id="admin-logout" class="secondary-btn">Logout</button>
               </div>
             </div>
@@ -166,6 +167,7 @@
                       <option value="Visit Visa">Visit Visa</option>
                       <option value="Tourist Visa">Tourist Visa</option>
                       <option value="Work Visa">Work Visa</option>
+                      <option value="Study Visa">Study Visa</option>
                     </select>
                   </div>
 
@@ -173,6 +175,29 @@
                     <label for="offerDescription">Description</label>
                     <textarea id="offerDescription" rows="5" placeholder="Describe the visa opportunity" required></textarea>
                   </div>
+
+                  <fieldset class="offer-document-picker">
+                    <legend>Required documents</legend>
+                    <p>Select the documents applicants must upload (up to 8).</p>
+                    <input type="hidden" id="offerRequiredDocuments" name="requiredDocuments" value="[]" />
+                    <p id="offer-required-document-count" class="offer-required-document-count">0 documents selected</p>
+                    <div class="offer-document-options">
+                      <label class="checkbox-item"><input type="checkbox" name="offerDocument" value="Passport biodata page" /><span>Passport biodata page</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="offerDocument" value="Passport-size picture" /><span>Passport-size picture</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="offerDocument" value="Full-length picture" /><span>Full-length picture</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="offerDocument" value="Educational certificates" /><span>Educational certificates</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="offerDocument" value="Academic transcript" /><span>Academic transcript</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="offerDocument" value="CV / Resume" /><span>CV / Resume</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="offerDocument" value="Bank statement" /><span>Bank statement</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="offerDocument" value="Business certificate" /><span>Business certificate</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="offerDocument" value="Other documents" /><span>Other documents</span></label>
+                    </div>
+                    <div class="form-field offer-other-documents">
+                      <label for="offerOtherDocuments">Other documents</label>
+                      <textarea id="offerOtherDocuments" rows="3" placeholder="Add one other document per line"></textarea>
+                    </div>
+                    <small>Applicants will upload each selected document as PDF, Word, JPG or PNG (up to 8 MB each).</small>
+                  </fieldset>
 
                   <div class="form-field">
                     <label for="offerImage">Image Upload</label>
@@ -190,35 +215,39 @@
               </div>
             </div>
 
-            <div class="panel applications-panel hidden" id="applications-panel">
-              <h3>Travel Applications</h3>
-              <div id="application-list" class="list-stack"></div>
-            </div>
+          </div>
 
-            <div class="panel applications-panel hidden" id="document-help-panel">
-              <h3>Document Assistance Requests</h3>
-              <div id="document-help-list" class="list-stack"></div>
-            </div>
-
-            <div class="panel applications-panel hidden" id="study-abroad-panel">
-              <h3>Study Abroad Requests</h3>
-              <div id="study-abroad-list" class="list-stack"></div>
-            </div>
-
-            <div class="panel applications-panel hidden" id="work-abroad-panel">
-              <h3>Work Abroad Requests</h3>
-              <div id="work-abroad-list" class="list-stack"></div>
-            </div>
-
-            <div class="panel applications-panel hidden" id="flight-booking-panel">
-              <h3>Flight Booking Requests</h3>
-              <div id="flight-booking-list" class="list-stack"></div>
-            </div>
-
-            <div class="panel applications-panel hidden" id="hotel-booking-panel">
-              <h3>Hotel Reservation Requests</h3>
-              <div id="hotel-booking-list" class="list-stack"></div>
-            </div>
+          <div id="admin-requests-modal" class="admin-requests-modal hidden" aria-hidden="true">
+            <div class="admin-requests-backdrop" data-close-admin-requests="true"></div>
+            <section class="admin-requests-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-requests-title" tabindex="-1">
+              <header class="admin-requests-header">
+                <h2 id="admin-requests-title">Requests</h2>
+                <button type="button" class="admin-requests-close" aria-label="Close requests" data-close-admin-requests="true">&times;</button>
+              </header>
+              <div class="admin-requests-content">
+                <div class="panel applications-panel hidden" id="applications-panel">
+                  <div id="application-list" class="list-stack"></div>
+                </div>
+                <div class="panel applications-panel hidden" id="document-help-panel">
+                  <div id="document-help-list" class="list-stack"></div>
+                </div>
+                <div class="panel applications-panel hidden" id="study-abroad-panel">
+                  <div id="study-abroad-list" class="list-stack"></div>
+                </div>
+                <div class="panel applications-panel hidden" id="work-abroad-panel">
+                  <div id="work-abroad-list" class="list-stack"></div>
+                </div>
+                <div class="panel applications-panel hidden" id="flight-booking-panel">
+                  <div id="flight-booking-list" class="list-stack"></div>
+                </div>
+                <div class="panel applications-panel hidden" id="hotel-booking-panel">
+                  <div id="hotel-booking-list" class="list-stack"></div>
+                </div>
+                <div class="panel applications-panel hidden" id="offer-applications-panel">
+                  <div id="offer-applications-list" class="list-stack"></div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </section>

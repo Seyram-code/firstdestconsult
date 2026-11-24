@@ -81,7 +81,34 @@ function createAdminNotifier({
   };
 }
 
+function createApplicantNotifier({ transporter, from, logger = console }) {
+  return async function notifyApplicant(email, subject, name, details = {}) {
+    const normalizedEmail = String(email || '').trim();
+    if (!transporter || !normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return 'not_configured';
+    }
+
+    const detailText = Object.entries(details)
+      .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : String(value ?? 'Not provided')}`)
+      .join('\n');
+
+    try {
+      await transporter.sendMail({
+        to: normalizedEmail,
+        from,
+        subject: `First Dest Consult — ${subject}`,
+        text: `Dear ${name || 'Applicant'},\n\nThank you for contacting First Dest Consult. We have received your ${subject.toLowerCase()} and will review it shortly.\n\nSubmission details:\n${detailText}\n\nKind regards,\nFirst Dest Consult\ninfo@firstdestltd.com`,
+      });
+      return 'sent';
+    } catch (error) {
+      logger.error('Applicant confirmation email failed:', error.message);
+      return 'failed';
+    }
+  };
+}
+
 module.exports = {
   FROG_SMS_ENDPOINT,
   createAdminNotifier,
+  createApplicantNotifier,
 };

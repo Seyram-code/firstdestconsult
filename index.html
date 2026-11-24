@@ -218,6 +218,41 @@
         </div>
       </section>
 
+      <dialog id="opportunity-dialog" class="opportunity-dialog" aria-labelledby="opportunity-dialog-title">
+        <div class="opportunity-dialog-header">
+          <div>
+            <p class="eyebrow dark">Opportunity application</p>
+            <h2 id="opportunity-dialog-title"></h2>
+          </div>
+          <button type="button" class="opportunity-dialog-close" aria-label="Close application form">&times;</button>
+        </div>
+        <div id="opportunity-dialog-description" class="opportunity-dialog-description"></div>
+        <form id="opportunity-application-form" class="opportunity-application-form">
+          <input type="hidden" name="offerId" />
+          <div class="form-grid two-col">
+            <div class="form-field">
+              <label for="opportunityApplicantName">Full name</label>
+              <input id="opportunityApplicantName" name="name" type="text" autocomplete="name" required />
+            </div>
+            <div class="form-field">
+              <label for="opportunityApplicantPhone">Phone number</label>
+              <input id="opportunityApplicantPhone" name="phone" type="tel" autocomplete="tel" required />
+            </div>
+            <div class="form-field full-width">
+              <label for="opportunityApplicantEmail">Email address</label>
+              <input id="opportunityApplicantEmail" name="email" type="email" autocomplete="email" required />
+            </div>
+            <div class="form-field full-width">
+              <label for="opportunityApplicantMessage">Message (optional)</label>
+              <textarea id="opportunityApplicantMessage" name="message" rows="4" placeholder="Tell us briefly why you are interested"></textarea>
+            </div>
+          </div>
+          <div id="opportunity-required-documents" class="opportunity-required-documents"></div>
+          <button type="submit" class="primary-btn form-submit-btn">Submit Application</button>
+          <p id="opportunity-application-status" class="form-status" aria-live="polite"></p>
+        </form>
+      </dialog>
+
       <section class="stats-band section">
         <div class="container stats-grid">
           <div class="stat-item">

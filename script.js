@@ -5,6 +5,200 @@ if (yearNode) {
   yearNode.textContent = new Date().getFullYear();
 }
 
+function initializeModernSelects() {
+  const selects = Array.from(document.querySelectorAll('.form-field select'));
+  if (!selects.length) return;
+
+  let openSelect = null;
+  const closeSelect = (select, returnFocus = false) => {
+    if (!select) return;
+    const wrapper = select.closest('.modern-select');
+    const trigger = wrapper?.querySelector('.modern-select-trigger');
+    const menu = wrapper?.querySelector('.modern-select-menu');
+    if (!wrapper || !trigger || !menu) return;
+    wrapper.classList.remove('is-open');
+    trigger.setAttribute('aria-expanded', 'false');
+    menu.hidden = true;
+    if (openSelect === select) openSelect = null;
+    if (returnFocus) trigger.focus();
+  };
+
+  const syncSelect = (select) => {
+    const wrapper = select.closest('.modern-select');
+    if (!wrapper) return;
+    const trigger = wrapper.querySelector('.modern-select-trigger');
+    const valueNode = wrapper.querySelector('.modern-select-value');
+    const menu = wrapper.querySelector('.modern-select-menu');
+    const selectedOption = select.options[select.selectedIndex];
+
+    valueNode.textContent = selectedOption?.textContent.trim() || 'Choose an option';
+    trigger.disabled = select.disabled;
+    trigger.setAttribute('aria-required', String(select.required));
+    trigger.setAttribute('aria-invalid', String(select.getAttribute('aria-invalid') === 'true'));
+    menu.replaceChildren();
+
+    Array.from(select.options).forEach((option, index) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'modern-select-option';
+      item.id = `${select.id}-option-${index}`;
+      item.setAttribute('role', 'option');
+      item.setAttribute('aria-selected', String(option === selectedOption));
+      item.disabled = option.disabled || select.disabled;
+      item.textContent = option.textContent.trim();
+      item.addEventListener('click', () => {
+        select.value = option.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        syncSelect(select);
+        closeSelect(select, true);
+      });
+      menu.append(item);
+    });
+  };
+
+  const focusOption = (select, direction = 0) => {
+    const wrapper = select.closest('.modern-select');
+    const menu = wrapper?.querySelector('.modern-select-menu');
+    if (!menu) return;
+    const options = Array.from(menu.querySelectorAll('.modern-select-option:not(:disabled)'));
+    if (!options.length) return;
+    const selectedIndex = options.findIndex((option) => option.getAttribute('aria-selected') === 'true');
+    const targetIndex = direction === 0
+      ? selectedIndex < 0 ? 0 : selectedIndex
+      : selectedIndex < 0
+        ? direction < 0 ? options.length - 1 : 0
+        : Math.max(0, Math.min(options.length - 1, selectedIndex + direction));
+    options[targetIndex].focus();
+    options[targetIndex].scrollIntoView({ block: 'nearest' });
+  };
+
+  selects.forEach((select, selectIndex) => {
+    if (select.dataset.modernSelect === 'true') return;
+    select.dataset.modernSelect = 'true';
+    if (!select.id) select.id = `modern-select-${selectIndex + 1}`;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'modern-select';
+    select.parentNode.insertBefore(wrapper, select);
+    wrapper.append(select);
+    select.classList.add('modern-select-native');
+    select.setAttribute('aria-hidden', 'true');
+    select.tabIndex = -1;
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'modern-select-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', `${select.id}-menu`);
+    const label = document.querySelector(`label[for="${CSS.escape(select.id)}"]`);
+    if (label) {
+      if (!label.id) label.id = `${select.id}-label`;
+      trigger.setAttribute('aria-labelledby', label.id);
+      label.addEventListener('click', (event) => {
+        event.preventDefault();
+        trigger.focus();
+        trigger.click();
+      });
+    } else {
+      trigger.setAttribute('aria-label', select.getAttribute('aria-label') || 'Choose an option');
+    }
+
+    const value = document.createElement('span');
+    value.className = 'modern-select-value';
+    const icon = document.createElement('span');
+    icon.className = 'modern-select-chevron';
+    icon.setAttribute('aria-hidden', 'true');
+    trigger.append(value, icon);
+
+    const menu = document.createElement('div');
+    menu.id = `${select.id}-menu`;
+    menu.className = 'modern-select-menu';
+    menu.setAttribute('role', 'listbox');
+    menu.hidden = true;
+    wrapper.append(trigger, menu);
+
+    trigger.addEventListener('click', () => {
+      if (trigger.disabled) return;
+      if (openSelect && openSelect !== select) closeSelect(openSelect);
+      const isOpening = trigger.getAttribute('aria-expanded') !== 'true';
+      if (!isOpening) {
+        closeSelect(select);
+        return;
+      }
+      openSelect = select;
+      wrapper.classList.add('is-open');
+      trigger.setAttribute('aria-expanded', 'true');
+      menu.hidden = false;
+      focusOption(select);
+    });
+
+    trigger.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (trigger.getAttribute('aria-expanded') !== 'true') trigger.click();
+      }
+    });
+
+    menu.addEventListener('keydown', (event) => {
+      const options = Array.from(menu.querySelectorAll('.modern-select-option:not(:disabled)'));
+      const currentIndex = options.indexOf(document.activeElement);
+      let nextIndex = currentIndex;
+      if (event.key === 'ArrowDown') nextIndex = Math.min(options.length - 1, currentIndex + 1);
+      else if (event.key === 'ArrowUp') nextIndex = Math.max(0, currentIndex - 1);
+      else if (event.key === 'Home') nextIndex = 0;
+      else if (event.key === 'End') nextIndex = options.length - 1;
+      else if (event.key === 'Escape') {
+        event.preventDefault();
+        closeSelect(select, true);
+        return;
+      } else if (event.key === 'Tab') {
+        closeSelect(select);
+        return;
+      } else {
+        return;
+      }
+
+      event.preventDefault();
+      options[nextIndex]?.focus();
+      options[nextIndex]?.scrollIntoView({ block: 'nearest' });
+    });
+
+    select.addEventListener('change', () => {
+      select.removeAttribute('aria-invalid');
+      syncSelect(select);
+    });
+    select.addEventListener('invalid', (event) => {
+      event.preventDefault();
+      select.setAttribute('aria-invalid', 'true');
+      syncSelect(select);
+      trigger.focus();
+    });
+    select.form?.addEventListener('reset', () => {
+      window.setTimeout(() => {
+        select.removeAttribute('aria-invalid');
+        syncSelect(select);
+      });
+    });
+
+    new MutationObserver(() => syncSelect(select)).observe(select, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['disabled', 'selected', 'value'],
+    });
+    syncSelect(select);
+  });
+
+  document.addEventListener('pointerdown', (event) => {
+    if (openSelect && !openSelect.closest('.modern-select')?.contains(event.target)) {
+      closeSelect(openSelect);
+    }
+  });
+}
+
+initializeModernSelects();
+
 const navToggle = document.querySelector('.nav-toggle');
 const navbar = document.querySelector('.navbar');
 
@@ -513,6 +707,7 @@ if (adminLoginForm) {
       await renderWorkAbroadRequests();
       await renderFlightBookingRequests();
       await renderHotelBookingRequests();
+      await renderOfferApplications();
     } catch (error) {
       adminLoginStatus.textContent = 'Incorrect access code.';
       adminLoginStatus.style.color = '#c03333';
@@ -567,8 +762,36 @@ if (adminResetForm) {
 
 const jobOfferForm = document.getElementById('job-offer-form');
 const offerStatus = document.getElementById('offer-status');
+let editingOfferId = null;
 
 if (jobOfferForm) {
+  const offerRequiredDocumentsInput = document.getElementById('offerRequiredDocuments');
+  const offerRequiredDocumentCount = document.getElementById('offer-required-document-count');
+
+  function collectOfferRequiredDocuments() {
+    const selectedDocuments = Array.from(jobOfferForm.querySelectorAll('input[name="offerDocument"]:checked'))
+      .map((input) => input.value);
+    const otherDocuments = (document.getElementById('offerOtherDocuments')?.value || '')
+      .split('\n')
+      .map((document) => document.trim())
+      .filter(Boolean);
+    const requiredDocuments = [...new Set([...selectedDocuments, ...otherDocuments])];
+    if (offerRequiredDocumentsInput) {
+      offerRequiredDocumentsInput.value = JSON.stringify(requiredDocuments);
+    }
+    if (offerRequiredDocumentCount) {
+      offerRequiredDocumentCount.textContent = `${requiredDocuments.length} ${requiredDocuments.length === 1 ? 'document' : 'documents'} selected`;
+    }
+    return requiredDocuments;
+  }
+
+  jobOfferForm.querySelectorAll('input[name="offerDocument"], #offerOtherDocuments')
+    .forEach((control) => {
+      control.addEventListener('input', collectOfferRequiredDocuments);
+      control.addEventListener('change', collectOfferRequiredDocuments);
+    });
+  collectOfferRequiredDocuments();
+
   jobOfferForm.addEventListener('submit', async function (event) {
     event.preventDefault();
 
@@ -576,10 +799,26 @@ if (jobOfferForm) {
     const location = document.getElementById('offerLocation').value.trim();
     const type = document.getElementById('offerType').value.trim();
     const description = document.getElementById('offerDescription').value.trim();
+    let requiredDocuments = collectOfferRequiredDocuments();
+    if (offerRequiredDocumentsInput?.value) {
+      try {
+        const payloadDocuments = JSON.parse(offerRequiredDocumentsInput.value);
+        if (Array.isArray(payloadDocuments)) {
+          requiredDocuments = payloadDocuments
+            .filter((documentName) => typeof documentName === 'string')
+            .map((documentName) => documentName.trim())
+            .filter(Boolean);
+        }
+      } catch {
+        requiredDocuments = [];
+      }
+    }
     const imageInput = document.getElementById('offerImage');
 
-    if (!title || !location || !type || !description) {
-      offerStatus.textContent = 'Please complete all required fields to publish an offer.';
+    if (!title || !location || !type || !description || requiredDocuments.length > 8) {
+      offerStatus.textContent = requiredDocuments.length > 8
+        ? 'List no more than 8 required documents.'
+        : 'Please complete all required fields to publish an offer.';
       offerStatus.style.color = '#c03333';
       return;
     }
@@ -591,14 +830,15 @@ if (jobOfferForm) {
       formData.append('location', location);
       formData.append('type', type);
       formData.append('description', description);
+      formData.append('requiredDocuments', JSON.stringify(requiredDocuments));
       formData.append('link', '');
 
       if (imageInput && imageInput.files && imageInput.files[0]) {
         formData.append('image', imageInput.files[0]);
       }
 
-      const response = await fetch('/api/offers', {
-        method: 'POST',
+      const response = await fetch(editingOfferId ? `/api/offers/${encodeURIComponent(editingOfferId)}` : '/api/offers', {
+        method: editingOfferId ? 'PUT' : 'POST',
         body: formData,
       });
 
@@ -608,15 +848,19 @@ if (jobOfferForm) {
         throw new Error(data.message || 'Failed to publish');
       }
 
-      offerStatus.textContent = 'Offer published successfully.';
+      offerStatus.textContent = editingOfferId ? 'Offer updated successfully.' : 'Offer published successfully.';
       offerStatus.style.color = '#0a8659';
-      showToast('Offer published successfully.');
+      showToast(editingOfferId ? 'Offer updated successfully.' : 'Offer published successfully.');
       jobOfferForm.reset();
+      editingOfferId = null;
+      const publishButton = jobOfferForm.querySelector('button[type="submit"]');
+      if (publishButton) publishButton.textContent = 'Publish Offer';
+      window.setTimeout(collectOfferRequiredDocuments);
       await renderOffers();
     } catch (error) {
-      offerStatus.textContent = 'There was a problem publishing the offer.';
+      offerStatus.textContent = error.message || 'There was a problem publishing the offer.';
       offerStatus.style.color = '#c03333';
-      showToast('There was a problem publishing the offer.', 'error');
+      showToast(error.message || 'There was a problem publishing the offer.', 'error');
     }
   });
 }
@@ -1100,6 +1344,7 @@ if (flightBookingForm) {
     const currentCountry = document.getElementById('flightCurrentCountry').value.trim();
     const name = document.getElementById('flightContactName').value.trim();
     const phone = document.getElementById('flightContactPhone').value.trim();
+    const email = document.getElementById('flightContactEmail').value.trim();
     const currentAirport = document.getElementById('flightCurrentAirport').value.trim();
     const destinationCountry = document.getElementById('flightDestinationCountry').value.trim();
     const destinationAirport = document.getElementById('flightDestinationAirport').value.trim();
@@ -1108,7 +1353,7 @@ if (flightBookingForm) {
     const returnDate = document.getElementById('flightReturnDate').value;
     const airline = document.getElementById('flightAirline').value.trim();
 
-    if (!name || !phone || !currentCountry || !currentAirport || !destinationCountry || !destinationAirport || !destinationCity || !departureDate || !returnDate) {
+    if (!name || !phone || !email || !currentCountry || !currentAirport || !destinationCountry || !destinationAirport || !destinationCity || !departureDate || !returnDate) {
       if (flightBookingStatus) {
         flightBookingStatus.textContent = 'Please complete all required fields and choose the suggested airports before submitting.';
         flightBookingStatus.style.color = '#c03333';
@@ -1131,6 +1376,7 @@ if (flightBookingForm) {
         body: JSON.stringify({
           name,
           phone,
+          email,
           currentCountry,
           currentAirport,
           destinationCountry,
@@ -1172,6 +1418,7 @@ if (hotelBookingForm) {
 
     const name = document.getElementById('hotelContactName').value.trim();
     const phone = document.getElementById('hotelContactPhone').value.trim();
+    const email = document.getElementById('hotelContactEmail').value.trim();
     const destinationCountry = document.getElementById('hotelDestinationCountry').value.trim();
     const destinationCity = document.getElementById('hotelDestinationCity').value.trim();
     const checkInDate = document.getElementById('hotelCheckInDate').value;
@@ -1179,7 +1426,7 @@ if (hotelBookingForm) {
     const adults = document.getElementById('hotelAdults').value.trim();
     const kids = document.getElementById('hotelKids').value.trim();
 
-    if (!name || !phone || !destinationCountry || !destinationCity || !checkInDate || !checkOutDate) {
+    if (!name || !phone || !email || !destinationCountry || !destinationCity || !checkInDate || !checkOutDate) {
       if (hotelBookingStatus) {
         hotelBookingStatus.textContent = 'Please complete the required destination and date fields.';
         hotelBookingStatus.style.color = '#c03333';
@@ -1202,6 +1449,7 @@ if (hotelBookingForm) {
         body: JSON.stringify({
           name,
           phone,
+          email,
           destinationCountry,
           destinationCity,
           checkInDate,
@@ -1357,6 +1605,7 @@ function renderAdminOfferCards(offers) {
       const imageMarkup = offer.image
         ? `<img src="${escapeHtml(offer.image)}" alt="${escapeHtml(offer.title)}" class="offer-image" />`
         : '';
+      const requiredDocuments = Array.isArray(offer.requiredDocuments) ? offer.requiredDocuments : [];
 
       return `
         <article class="list-item">
@@ -1367,7 +1616,9 @@ function renderAdminOfferCards(offers) {
           <p>${escapeHtml(offer.location)}</p>
           ${imageMarkup}
           <p>${escapeHtml(offer.description)}</p>
+          <p><strong>Required documents:</strong> ${escapeHtml(requiredDocuments.join(', ') || 'None specified')}</p>
           <div class="list-item-actions">
+            <button type="button" class="edit-offer-btn" data-edit-offer="${escapeHtml(String(offer.id || ''))}">Edit Documents</button>
             <button type="button" class="delete-item-btn" data-delete-type="offer" data-id="${escapeHtml(String(offer.id || ''))}">Delete</button>
           </div>
         </article>
@@ -1398,9 +1649,13 @@ function renderHomeOfferCards(offers) {
       const { day, month, year } = formatOfferDate(offer);
       const location = offer.location || 'Worldwide';
       const typeLabel = offer.type || 'Featured Event';
+      const requiredDocuments = Array.isArray(offer.requiredDocuments) ? offer.requiredDocuments : [];
+      const documentSummary = requiredDocuments.length
+        ? `<p class="featured-offer-documents">Upload ${requiredDocuments.length} required ${requiredDocuments.length === 1 ? 'document' : 'documents'}: ${escapeHtml(requiredDocuments.join(', '))}</p>`
+        : '<p class="featured-offer-documents">No documents are required for this opportunity.</p>';
 
       return `
-        <article class="featured-offer-card">
+        <article class="featured-offer-card" data-offer-id="${escapeHtml(String(offer.id || ''))}">
           <div class="featured-offer-date">
             <div class="featured-offer-day">${escapeHtml(day)}</div>
             <div class="featured-offer-month-year">${escapeHtml(month)} ${escapeHtml(year)}</div>
@@ -1418,11 +1673,172 @@ function renderHomeOfferCards(offers) {
             <div class="featured-offer-meta">
               <span>${escapeHtml(typeLabel)}</span>
             </div>
+            ${documentSummary}
+            <button type="button" class="primary-btn opportunity-apply-btn" data-offer-id="${escapeHtml(String(offer.id || ''))}">Open Application &amp; Upload Documents</button>
           </div>
         </article>
       `;
     })
     .join('');
+}
+
+let availableOffers = [];
+
+async function renderOfferApplications() {
+  const applicationList = document.getElementById('offer-applications-list');
+  if (!applicationList) return;
+
+  const response = await fetch('/api/admin/offer-applications');
+  const data = await response.json();
+  if (!response.ok || !Array.isArray(data.applications)) {
+    applicationList.innerHTML = `<div class="empty-state">${escapeHtml(data.message || 'Unable to load opportunity applications. Please log in again.')}</div>`;
+    return;
+  }
+
+  const applications = data.applications;
+  if (!applications.length) {
+    applicationList.innerHTML = '<div class="empty-state">No opportunity applications received yet.</div>';
+    return;
+  }
+
+  applicationList.innerHTML = applications.map((application) => {
+    const documents = Array.isArray(application.documents) ? application.documents : [];
+    return `
+      <article class="list-item compact">
+        <div class="list-item-header">
+          <strong>${escapeHtml(application.name || 'Applicant')}</strong>
+          <span>${escapeHtml(application.offerTitle || 'Opportunity')}</span>
+        </div>
+        <div class="application-fields">
+          <div class="application-field"><span>Phone</span><strong>${escapeHtml(application.phone || 'Not provided')}</strong></div>
+          <div class="application-field"><span>Email</span><strong>${escapeHtml(application.email || 'Not provided')}</strong></div>
+          <div class="application-field full-width"><span>Message</span><strong>${escapeHtml(application.message || 'No message')}</strong></div>
+          <div class="application-field full-width">
+            <span>Uploaded documents</span>
+            <strong>${documents.length ? documents.map((document, index) =>
+              `<a href="/api/admin/offer-applications/${encodeURIComponent(application.id)}/documents/${index}">${escapeHtml(document.label)} — ${escapeHtml(document.originalName)}</a>`
+            ).join('<br />') : 'None required'}</strong>
+          </div>
+        </div>
+        <div class="list-item-actions">
+          <button type="button" class="delete-item-btn" data-delete-type="offer-application" data-id="${escapeHtml(String(application.id || ''))}">Delete</button>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+const opportunityDialog = document.getElementById('opportunity-dialog');
+const opportunityApplicationForm = document.getElementById('opportunity-application-form');
+const opportunityApplicationStatus = document.getElementById('opportunity-application-status');
+
+function openOpportunityApplication(offer) {
+  if (!opportunityDialog || !opportunityApplicationForm || !offer) return;
+
+  const requiredDocuments = Array.isArray(offer.requiredDocuments) ? offer.requiredDocuments : [];
+  opportunityApplicationForm.reset();
+  document.getElementById('opportunity-dialog-title').textContent = offer.title || 'Opportunity';
+  document.getElementById('opportunity-dialog-description').textContent =
+    `${offer.type || 'Opportunity'} · ${offer.location || 'Worldwide'}\n\n${offer.description || ''}`;
+  opportunityApplicationForm.elements.offerId.value = String(offer.id);
+  opportunityApplicationStatus.textContent = '';
+
+  const documentContainer = document.getElementById('opportunity-required-documents');
+  documentContainer.replaceChildren();
+  const heading = document.createElement('h3');
+  heading.textContent = requiredDocuments.length
+    ? `Upload required documents (${requiredDocuments.length})`
+    : 'Documents';
+  documentContainer.append(heading);
+
+  if (!requiredDocuments.length) {
+    const message = document.createElement('p');
+    message.textContent = 'No documents are specifically required. You can attach supporting documents below if relevant.';
+    documentContainer.append(message);
+  } else {
+    const help = document.createElement('p');
+    help.textContent = 'Upload each requested document. Accepted formats: PDF, Word, JPG, or PNG (8 MB max each).';
+    documentContainer.append(help);
+
+    const requiredDocumentGrid = document.createElement('div');
+    requiredDocumentGrid.className = 'opportunity-required-document-grid';
+
+    requiredDocuments.forEach((documentName, index) => {
+      const field = document.createElement('div');
+      field.className = 'form-field';
+      const label = document.createElement('label');
+      label.htmlFor = `opportunityDocument${index}`;
+      label.textContent = documentName;
+      const input = document.createElement('input');
+      input.id = `opportunityDocument${index}`;
+      input.name = `document_${index}`;
+      input.type = 'file';
+      input.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+      input.required = true;
+      field.append(label, input);
+      requiredDocumentGrid.append(field);
+    });
+    documentContainer.append(requiredDocumentGrid);
+  }
+
+  const optionalField = document.createElement('div');
+  optionalField.className = 'form-field opportunity-additional-documents';
+  const optionalLabel = document.createElement('label');
+  optionalLabel.htmlFor = 'opportunitySupportingDocuments';
+  optionalLabel.textContent = 'Additional supporting documents (optional)';
+  const optionalInput = document.createElement('input');
+  optionalInput.id = 'opportunitySupportingDocuments';
+  optionalInput.name = 'supportingDocuments';
+  optionalInput.type = 'file';
+  optionalInput.multiple = true;
+  optionalInput.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+  const optionalHelp = document.createElement('small');
+  optionalHelp.textContent = 'You can attach multiple PDF, Word, JPG, or PNG files (8 MB max each).';
+  optionalField.append(optionalLabel, optionalInput, optionalHelp);
+  documentContainer.append(optionalField);
+
+  opportunityDialog.showModal();
+}
+
+document.addEventListener('click', (event) => {
+  const applyButton = event.target.closest('.opportunity-apply-btn');
+  const offerCard = applyButton ? null : event.target.closest('.featured-offer-card');
+  if (!applyButton && (!offerCard || event.target.closest('a, button, input, select, textarea'))) return;
+  const offerId = applyButton?.dataset.offerId || offerCard?.dataset.offerId;
+  const offer = availableOffers.find((item) => String(item.id) === offerId);
+  openOpportunityApplication(offer);
+});
+
+if (opportunityDialog) {
+  opportunityDialog.querySelector('.opportunity-dialog-close').addEventListener('click', () => opportunityDialog.close());
+  opportunityDialog.addEventListener('click', (event) => {
+    if (event.target === opportunityDialog) opportunityDialog.close();
+  });
+}
+
+if (opportunityApplicationForm) {
+  opportunityApplicationForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    opportunityApplicationStatus.textContent = '';
+    const offerId = opportunityApplicationForm.elements.offerId.value;
+
+    try {
+      const response = await fetch(`/api/offers/${encodeURIComponent(offerId)}/applications`, {
+        method: 'POST',
+        body: new FormData(opportunityApplicationForm),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to submit your application.');
+
+      opportunityApplicationStatus.textContent = 'Thank you. Your application and documents have been submitted.';
+      opportunityApplicationStatus.style.color = '#0a8659';
+      opportunityApplicationForm.reset();
+      window.setTimeout(() => opportunityDialog.close(), 1800);
+    } catch (error) {
+      opportunityApplicationStatus.textContent = error.message || 'There was a problem submitting your application.';
+      opportunityApplicationStatus.style.color = '#c03333';
+    }
+  });
 }
 
 async function renderOffers() {
@@ -1432,21 +1848,18 @@ async function renderOffers() {
   const response = await fetch('/api/offers');
   const data = await response.json();
   const offers = data.offers || [];
+  availableOffers = offers;
 
   if (offerList) {
-    if (!offers.length) {
-      offerList.innerHTML = '<div class="empty-state">No offers published yet.</div>';
-    } else {
-      offerList.innerHTML = renderAdminOfferCards(offers);
-    }
+    offerList.innerHTML = offers.length
+      ? renderAdminOfferCards(offers)
+      : '<div class="empty-state">No offers published yet.</div>';
   }
 
   if (homeOfferList) {
-    if (!offers.length) {
-      homeOfferList.innerHTML = '<div class="empty-state">No opportunities available right now.</div>';
-    } else {
-      homeOfferList.innerHTML = renderHomeOfferCards(offers);
-    }
+    homeOfferList.innerHTML = offers.length
+      ? renderHomeOfferCards(offers)
+      : '<div class="empty-state">No opportunities available right now.</div>';
   }
 }
 
@@ -1800,109 +2213,99 @@ const viewStudyAbroadRequestsBtn = document.getElementById('view-study-abroad-re
 const viewWorkAbroadRequestsBtn = document.getElementById('view-work-abroad-requests');
 const viewFlightBookingRequestsBtn = document.getElementById('view-flight-booking-requests');
 const viewHotelBookingRequestsBtn = document.getElementById('view-hotel-booking-requests');
+const viewOfferApplicationsBtn = document.getElementById('view-offer-applications');
 const applicationsPanel = document.getElementById('applications-panel');
 const documentHelpPanel = document.getElementById('document-help-panel');
 const studyAbroadPanel = document.getElementById('study-abroad-panel');
 const workAbroadPanel = document.getElementById('work-abroad-panel');
 const flightBookingPanel = document.getElementById('flight-booking-panel');
 const hotelBookingPanel = document.getElementById('hotel-booking-panel');
+const offerApplicationsPanel = document.getElementById('offer-applications-panel');
 const adminLogoutBtn = document.getElementById('admin-logout');
+const adminRequestsModal = document.getElementById('admin-requests-modal');
+const adminRequestsDialog = adminRequestsModal?.querySelector('.admin-requests-dialog');
+const adminRequestsTitle = document.getElementById('admin-requests-title');
+const requestPanels = [
+  applicationsPanel,
+  documentHelpPanel,
+  studyAbroadPanel,
+  workAbroadPanel,
+  flightBookingPanel,
+  hotelBookingPanel,
+  offerApplicationsPanel,
+].filter(Boolean);
+let adminRequestsTrigger = null;
 
-if (viewSubmittedApplicationsBtn) {
-  viewSubmittedApplicationsBtn.addEventListener('click', async () => {
-    if (!applicationsPanel) {
-      return;
-    }
-
-    const isHidden = applicationsPanel.classList.contains('hidden');
-    applicationsPanel.classList.toggle('hidden', !isHidden);
-    if (isHidden) {
-      applicationsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    await renderApplications();
-  });
+function closeAdminRequestsModal() {
+  if (!adminRequestsModal) return;
+  adminRequestsModal.classList.add('hidden');
+  adminRequestsModal.setAttribute('aria-hidden', 'true');
+  requestPanels.forEach((panel) => panel.classList.add('hidden'));
+  document.body.classList.remove('admin-requests-open');
+  adminRequestsTrigger?.focus();
+  adminRequestsTrigger = null;
 }
 
-if (viewDocumentHelpRequestsBtn) {
-  viewDocumentHelpRequestsBtn.addEventListener('click', async () => {
-    if (!documentHelpPanel) {
-      return;
-    }
-
-    const isHidden = documentHelpPanel.classList.contains('hidden');
-    documentHelpPanel.classList.toggle('hidden', !isHidden);
-    if (isHidden) {
-      documentHelpPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    await renderDocumentHelpRequests();
-  });
+async function openAdminRequestsModal(panel, title, render, trigger) {
+  if (!adminRequestsModal || !panel || !adminRequestsDialog) return;
+  requestPanels.forEach((requestPanel) => requestPanel.classList.add('hidden'));
+  panel.classList.remove('hidden');
+  adminRequestsTitle.textContent = title;
+  adminRequestsTrigger = trigger;
+  adminRequestsModal.classList.remove('hidden');
+  adminRequestsModal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('admin-requests-open');
+  adminRequestsDialog.focus();
+  await render();
 }
 
-if (viewStudyAbroadRequestsBtn) {
-  viewStudyAbroadRequestsBtn.addEventListener('click', async () => {
-    if (!studyAbroadPanel) {
-      return;
-    }
+const requestViews = [
+  [viewSubmittedApplicationsBtn, applicationsPanel, 'Travel Applications', renderApplications],
+  [viewDocumentHelpRequestsBtn, documentHelpPanel, 'Document Assistance Requests', renderDocumentHelpRequests],
+  [viewStudyAbroadRequestsBtn, studyAbroadPanel, 'Study Abroad Requests', renderStudyAbroadRequests],
+  [viewWorkAbroadRequestsBtn, workAbroadPanel, 'Work Abroad Requests', renderWorkAbroadRequests],
+  [viewFlightBookingRequestsBtn, flightBookingPanel, 'Flight Booking Requests', renderFlightBookingRequests],
+  [viewHotelBookingRequestsBtn, hotelBookingPanel, 'Hotel Reservation Requests', renderHotelBookingRequests],
+  [viewOfferApplicationsBtn, offerApplicationsPanel, 'Job & Opportunity Applications', renderOfferApplications],
+];
 
-    const isHidden = studyAbroadPanel.classList.contains('hidden');
-    studyAbroadPanel.classList.toggle('hidden', !isHidden);
-    if (isHidden) {
-      studyAbroadPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+requestViews.forEach(([button, panel, title, render]) => {
+  button?.addEventListener('click', () => openAdminRequestsModal(panel, title, render, button));
+});
 
-    await renderStudyAbroadRequests();
-  });
-}
+adminRequestsModal?.addEventListener('click', (event) => {
+  if (event.target.closest('[data-close-admin-requests="true"]')) {
+    closeAdminRequestsModal();
+  }
+});
 
-if (viewWorkAbroadRequestsBtn) {
-  viewWorkAbroadRequestsBtn.addEventListener('click', async () => {
-    if (!workAbroadPanel) {
-      return;
-    }
+adminRequestsModal?.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeAdminRequestsModal();
+    return;
+  }
+  if (event.key !== 'Tab' || !adminRequestsDialog) return;
 
-    const isHidden = workAbroadPanel.classList.contains('hidden');
-    workAbroadPanel.classList.toggle('hidden', !isHidden);
-    if (isHidden) {
-      workAbroadPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+  const focusableElements = Array.from(adminRequestsDialog.querySelectorAll(
+    'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+  )).filter((element) => element.offsetParent !== null);
+  if (!focusableElements.length) {
+    event.preventDefault();
+    adminRequestsDialog.focus();
+    return;
+  }
 
-    await renderWorkAbroadRequests();
-  });
-}
-
-if (viewFlightBookingRequestsBtn) {
-  viewFlightBookingRequestsBtn.addEventListener('click', async () => {
-    if (!flightBookingPanel) {
-      return;
-    }
-
-    const isHidden = flightBookingPanel.classList.contains('hidden');
-    flightBookingPanel.classList.toggle('hidden', !isHidden);
-    if (isHidden) {
-      flightBookingPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    await renderFlightBookingRequests();
-  });
-}
-
-if (viewHotelBookingRequestsBtn) {
-  viewHotelBookingRequestsBtn.addEventListener('click', async () => {
-    if (!hotelBookingPanel) {
-      return;
-    }
-
-    const isHidden = hotelBookingPanel.classList.contains('hidden');
-    hotelBookingPanel.classList.toggle('hidden', !isHidden);
-    if (isHidden) {
-      hotelBookingPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    await renderHotelBookingRequests();
-  });
-}
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+  if (event.shiftKey && document.activeElement === firstElement) {
+    event.preventDefault();
+    lastElement.focus();
+  } else if (!event.shiftKey && document.activeElement === lastElement) {
+    event.preventDefault();
+    firstElement.focus();
+  }
+});
 
 function ensureDeleteModal() {
   let modal = document.getElementById('delete-confirm-modal');
@@ -1975,6 +2378,7 @@ async function deleteRecord(type, id, message = 'Are you sure you want to delete
     'work-abroad': '/api/work-abroad',
     'flight-booking': '/api/flight-booking',
     'hotel-booking': '/api/hotel-booking',
+    'offer-application': '/api/admin/offer-applications',
     offer: '/api/offers',
   };
 
@@ -2007,10 +2411,40 @@ async function deleteRecord(type, id, message = 'Are you sure you want to delete
     await renderHotelBookingRequests();
   } else if (type === 'offer') {
     await renderOffers();
+  } else if (type === 'offer-application') {
+    await renderOfferApplications();
   }
 }
 
 document.addEventListener('click', async (event) => {
+  const editOfferButton = event.target.closest('[data-edit-offer]');
+  if (editOfferButton) {
+    const offerId = editOfferButton.dataset.editOffer;
+    const offer = availableOffers.find((item) => String(item.id) === offerId);
+    if (!offer || !jobOfferForm) return;
+
+    editingOfferId = offerId;
+    document.getElementById('offerTitle').value = offer.title || '';
+    document.getElementById('offerLocation').value = offer.location || '';
+    document.getElementById('offerType').value = offer.type || '';
+    document.getElementById('offerDescription').value = offer.description || '';
+    document.getElementById('offerOtherDocuments').value = '';
+
+    const requiredDocuments = Array.isArray(offer.requiredDocuments) ? offer.requiredDocuments : [];
+    const knownDocumentValues = new Set(Array.from(jobOfferForm.querySelectorAll('input[name="offerDocument"]')).map((input) => input.value));
+    jobOfferForm.querySelectorAll('input[name="offerDocument"]').forEach((input) => {
+      input.checked = requiredDocuments.includes(input.value);
+    });
+    document.getElementById('offerOtherDocuments').value = requiredDocuments
+      .filter((documentName) => !knownDocumentValues.has(documentName))
+      .join('\n');
+    collectOfferRequiredDocuments();
+    const publishButton = jobOfferForm.querySelector('button[type="submit"]');
+    if (publishButton) publishButton.textContent = 'Update Offer';
+    jobOfferForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
   const deleteButton = event.target.closest('.delete-item-btn');
   if (!deleteButton) {
     return;
@@ -2044,13 +2478,15 @@ if (flightBookingPanel) {
 if (hotelBookingPanel) {
   hotelBookingPanel.classList.add('hidden');
 }
+if (offerApplicationsPanel) {
+  offerApplicationsPanel.classList.add('hidden');
+}
 
 if (adminLogoutBtn) {
-  adminLogoutBtn.addEventListener('click', () => {
+  adminLogoutBtn.addEventListener('click', async () => {
+    await fetch('/api/admin/logout', { method: 'POST' });
+    closeAdminRequestsModal();
     applyAdminState(false);
-    if (applicationsPanel) {
-      applicationsPanel.classList.add('hidden');
-    }
     if (adminLoginStatus) {
       adminLoginStatus.textContent = 'Logged out successfully.';
       adminLoginStatus.style.color = '#0a8659';
@@ -2069,10 +2505,11 @@ if (isAdminPage && localStorage.getItem(ADMIN_SESSION_KEY) === 'true') {
   renderStudyAbroadRequests();
   renderWorkAbroadRequests();
   renderFlightBookingRequests();
+  renderOfferApplications();
 } else {
   renderOffers();
 }
 
-if (document.getElementById('offer-list') || document.getElementById('application-list') || document.getElementById('document-help-list') || document.getElementById('study-abroad-list') || document.getElementById('work-abroad-list') || document.getElementById('flight-booking-list') || document.getElementById('hotel-booking-list')) {
+if (document.getElementById('offer-list') || document.getElementById('application-list') || document.getElementById('document-help-list') || document.getElementById('study-abroad-list') || document.getElementById('work-abroad-list') || document.getElementById('flight-booking-list') || document.getElementById('hotel-booking-list') || document.getElementById('offer-applications-list')) {
   renderOffers();
 }

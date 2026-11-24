@@ -8,6 +8,7 @@ const COLLECTIONS = Object.freeze([
   'flightBookings',
   'hotelBookings',
   'offers',
+  'offerApplications',
 ]);
 
 const collectionSet = new Set(COLLECTIONS);
@@ -100,6 +101,19 @@ async function insertRecord(collection, record) {
   );
 }
 
+async function updateRecord(collection, record) {
+  assertCollection(collection);
+  if (!record || typeof record !== 'object' || Array.isArray(record)) {
+    throw new Error('Record must be an object.');
+  }
+  const id = assertRecordId(record.id);
+  const [result] = await getPool().execute(
+    'INSERT INTO app_records (collection, record_id, payload) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE payload = VALUES(payload)',
+    [collection, id, JSON.stringify(record)],
+  );
+  return result.affectedRows > 0;
+}
+
 async function findRecord(collection, id) {
   assertCollection(collection);
   const [rows] = await getPool().execute(
@@ -171,4 +185,5 @@ module.exports = {
   insertRecord,
   listRecords,
   pingDatabase,
+  updateRecord,
 };

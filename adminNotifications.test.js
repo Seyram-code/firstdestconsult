@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { FROG_SMS_ENDPOINT, createAdminNotifier } = require('./adminNotifications');
+const { FROG_SMS_ENDPOINT, createAdminNotifier, createApplicantNotifier } = require('./adminNotifications');
 
 const logger = {
   warn() {},
@@ -79,4 +79,26 @@ test('reports SMS as not configured until all FROG settings are present', async 
 
   assert.equal(emailSent, true);
   assert.deepEqual(result, { email: 'sent', sms: 'not_configured' });
+});
+
+test('sends a branded confirmation email to the applicant', async () => {
+  let message;
+  const notifyApplicant = createApplicantNotifier({
+    transporter: { async sendMail(value) { message = value; } },
+    from: 'First Dest Consult <info@firstdestltd.com>',
+  });
+
+  const status = await notifyApplicant(
+    'applicant@example.com',
+    'document request',
+    'Ama Doe',
+    { 'Document types': ['Passport', 'Bank statement'] },
+  );
+
+  assert.equal(status, 'sent');
+  assert.equal(message.to, 'applicant@example.com');
+  assert.match(message.subject, /First Dest Consult/);
+  assert.match(message.text, /Dear Ama Doe/);
+  assert.match(message.text, /received your document request/);
+  assert.match(message.text, /Bank statement/);
 });

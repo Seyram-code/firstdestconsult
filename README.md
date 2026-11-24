@@ -53,3 +53,17 @@ set `FROG_SMS_USERNAME`, `FROG_SMS_API_KEY`, and an approved
 `https://frogapi.wigal.com.gh/api/v3/sms/send`. Keep credentials in each
 environment's private settings, never in Git. `.env.example` lists all supported
 variables.
+
+## Job and opportunity applications
+
+When publishing an offer in the admin portal, select the required documents:
+passport biodata page, passport-size picture, full-length picture, educational
+certificates, academic transcript, CV / Resume, bank statement, business
+certificate, and other documents. Admins can also enter custom document names
+one per line. Up to 8 documents can be requested. Visitors can open the
+opportunity, complete the application form, and upload each requested document
+as PDF, Word, JPG, or PNG (8 MB max per file). Applications appear under
+**Opportunity Applications** in the admin portal, where uploaded files can be
+downloaded after admin login. Uploaded documents are kept outside the public
+uploads directory. If an opportunity has no required documents, applicants can
+still attach optional supporting documents in the application form.

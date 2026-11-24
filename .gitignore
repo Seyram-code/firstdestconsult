@@ -5,6 +5,7 @@ node_modules/
 data.json
 admin-config.json
 uploads/offers/*
+.private-uploads/
 database/.env
 
 /*-check*.png
